@@ -69,7 +69,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
     _initializePortfolio();
   }
 
-  void _initializePortfolio() async {
+  void _initializePortfolio() {
     _getWalletSolanaBalance();
     _getWalletTotalStakedSolana();
 
@@ -704,7 +704,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: vsTokens.values.map((vsToken) {
         return TextButton(
-          onPressed: () async {
+          onPressed: () {
             if (vsToken.token == _vsToken) {
               return;
             }
