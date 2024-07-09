@@ -51,7 +51,7 @@ class _TokenInfoState extends State<TokenInfo> {
     _initializeData();
   }
 
-  Future<void> _initializeData() async {
+  void _initializeData() async {
     await _getTokenSupply();
 
     if (_tokenSupply != null) {

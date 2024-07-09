@@ -77,9 +77,9 @@ class _PortfolioPageState extends State<PortfolioPage> {
 
     if (mounted) {
       setState(() {
-        _timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+        _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
           try {
-            await _getPricesAndUpdateValueInfo(_vsToken);
+            _getPricesAndUpdateValueInfo(_vsToken);
           } catch (e) {
             if (mounted) {
               setState(() {
@@ -231,7 +231,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
     }
   }
 
-  Future<void> _getPricesAndUpdateValueInfo(TokenModel vsToken) async {
+  void _getPricesAndUpdateValueInfo(TokenModel vsToken) async {
     final solanaPrice =
         await fetchPrice(vsTokens.WSOL.token.mint, vsToken.mint);
 
@@ -505,58 +505,12 @@ class _PortfolioPageState extends State<PortfolioPage> {
           },
           child: ListTile(
             leading: ClipOval(
-              child: vsTokens.WSOL.token.logo.endsWith('.svg')
-                  ? SvgPicture.network(
-                      vsTokens.WSOL.token.logo,
-                      placeholderBuilder: (context) => Container(
-                        width: 35.0,
-                        height: 35.0,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.grey,
-                        ),
-                        child: Center(
-                          child: Text(
-                            vsTokens.WSOL.token.name[0],
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ),
-                      height: 35.0,
-                      width: 35.0,
-                    )
-                  : CachedNetworkImage(
-                      imageUrl: vsTokens.WSOL.token.logo,
-                      placeholder: (context, url) => Container(
-                        width: 35.0,
-                        height: 35.0,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.grey,
-                        ),
-                        child: Center(
-                          child: Text(
-                            vsTokens.WSOL.token.name[0],
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        width: 35.0,
-                        height: 35.0,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.grey,
-                        ),
-                        child: Text(
-                          vsTokens.WSOL.token.name[0],
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                      ),
-                      height: 35.0,
-                      width: 35.0,
-                      fit: BoxFit.cover,
-                    ),
+              child: CachedNetworkImage(
+                imageUrl: vsTokens.WSOL.token.logo,
+                height: 35.0,
+                width: 35.0,
+                fit: BoxFit.cover,
+              ),
             ),
             title: const Text(
               'Solana',
@@ -598,54 +552,12 @@ class _PortfolioPageState extends State<PortfolioPage> {
           },
           child: ListTile(
             leading: ClipOval(
-              child: vsTokens.WSOL.token.logo.endsWith('.svg')
-                  ? SvgPicture.network(
-                      vsTokens.WSOL.token.logo,
-                      placeholderBuilder: (context) => Container(
-                        width: 35.0,
-                        height: 35.0,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.grey,
-                        ),
-                        child: Text(
-                          vsTokens.WSOL.token.name[0],
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                      ),
-                      height: 35.0,
-                      width: 35.0,
-                    )
-                  : CachedNetworkImage(
-                      imageUrl: vsTokens.WSOL.token.logo,
-                      placeholder: (context, url) => Container(
-                        width: 35.0,
-                        height: 35.0,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.grey,
-                        ),
-                        child: Text(
-                          vsTokens.WSOL.token.name[0],
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        width: 35.0,
-                        height: 35.0,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.grey,
-                        ),
-                        child: Text(
-                          vsTokens.WSOL.token.name[0],
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                      ),
-                      height: 35.0,
-                      width: 35.0,
-                      fit: BoxFit.cover,
-                    ),
+              child: CachedNetworkImage(
+                imageUrl: vsTokens.WSOL.token.logo,
+                height: 35.0,
+                width: 35.0,
+                fit: BoxFit.cover,
+              ),
             ),
             title: const Text(
               'Staked Solana',
@@ -803,7 +715,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
             });
 
             try {
-              await _getPricesAndUpdateValueInfo(vsToken.token);
+              _getPricesAndUpdateValueInfo(vsToken.token);
             } catch (e) {
               if (mounted) {
                 setState(() {
