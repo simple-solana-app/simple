@@ -1,9 +1,11 @@
 import 'package:intl/intl.dart';
+import 'package:solana/solana.dart';
 
 const String simpleWebsiteAddress = "simple-solana-app.github.io";
 const String simpleLogoUri = "../logo.png";
 
 const String mainnetBetaUri = 'https://api.mainnet-beta.solana.com';
+RpcClient mainnetClient = RpcClient(mainnetBetaUri);
 
 const String tokenProgramId = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
 const String token2022ProgramId = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb';

@@ -209,6 +209,7 @@ class _TokenPairWithGraphState extends State<TokenPairWithGraph> {
                   const SizedBox(
                     width: 27.9,
                   ),
+                  //TODO make these not overflow
                   ElevatedButton(
                     onPressed: () =>
                         _showSearchDialog(context, isVsToken: true),

@@ -1,15 +1,12 @@
 import 'dart:typed_data';
-
 import 'package:simple/domain/common.dart';
 import 'package:solana/base58.dart';
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
 
-final _mainnetClient = RpcClient(mainnetBetaUri);
-
 Future<double> fetchAccountSolanaBalance(account) async {
   try {
-    final accountBalance = await _mainnetClient.getBalance(account);
+    final accountBalance = await mainnetClient.getBalance(account);
 
     return (accountBalance.value / lamportsPerSol);
   } catch (e) {
@@ -25,7 +22,7 @@ Future<double> fetchAccountTotalStakedSol(account) async {
   ];
 
   try {
-    final response = await _mainnetClient.getProgramAccounts(stakeProgramId,
+    final response = await mainnetClient.getProgramAccounts(stakeProgramId,
         encoding: encoding, filters: filters);
 
     if (response.isEmpty) {
@@ -50,7 +47,7 @@ Future<List<ProgramAccount>> fetchTokenAccounts(account) async {
   const encoding = Encoding.base64;
 
   try {
-    final tokenAccounts = await _mainnetClient
+    final tokenAccounts = await mainnetClient
         .getTokenAccountsByOwner(account, filter, encoding: encoding);
 
     return tokenAccounts.value;
@@ -65,7 +62,7 @@ Future<List<ProgramAccount>> fetchToken2022Accounts(account) async {
   const encoding = Encoding.base64;
 
   try {
-    final tokenAccounts = await _mainnetClient
+    final tokenAccounts = await mainnetClient
         .getTokenAccountsByOwner(account, filter, encoding: encoding);
 
     return tokenAccounts.value;
@@ -77,7 +74,7 @@ Future<List<ProgramAccount>> fetchToken2022Accounts(account) async {
 Future<double> fetchTokenAccountBalance(tokenAccount) async {
   try {
     final tokenAccountBalance =
-        await _mainnetClient.getTokenAccountBalance(tokenAccount);
+        await mainnetClient.getTokenAccountBalance(tokenAccount);
 
     return double.parse(tokenAccountBalance.value.uiAmountString!);
   } catch (e) {
@@ -87,7 +84,7 @@ Future<double> fetchTokenAccountBalance(tokenAccount) async {
 
 Future<double> fetchSolSupply() async {
   try {
-    final solanaSupply = await _mainnetClient.getSupply();
+    final solanaSupply = await mainnetClient.getSupply();
     final int lamportsSupply = solanaSupply.value.total;
     return lamportsSupply / lamportsPerSol;
   } catch (e) {

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -32,6 +31,8 @@ class PortfolioPage extends StatefulWidget {
 
 class _PortfolioPageState extends State<PortfolioPage> {
   late Timer _timer;
+
+  bool _apiError = false;
 
   double? _walletSolanaBalance;
   double? _walletTotalStakedSolana;
@@ -65,10 +66,10 @@ class _PortfolioPageState extends State<PortfolioPage> {
   void initState() {
     super.initState();
 
-    _initalizePortfolio();
+    _initializePortfolio();
   }
 
-  void _initalizePortfolio() async {
+  void _initializePortfolio() async {
     _getWalletSolanaBalance();
     _getWalletTotalStakedSolana();
 
@@ -77,7 +78,15 @@ class _PortfolioPageState extends State<PortfolioPage> {
     if (mounted) {
       setState(() {
         _timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
-          await _getPricesAndUpdateValueInfo(_vsToken);
+          try {
+            await _getPricesAndUpdateValueInfo(_vsToken);
+          } catch (e) {
+            if (mounted) {
+              setState(() {
+                _apiError = true;
+              });
+            }
+          }
         });
       });
     }
@@ -292,20 +301,61 @@ class _PortfolioPageState extends State<PortfolioPage> {
 
     return Scaffold(
       backgroundColor: Colors.black,
-      body: _walletTotalValue != null
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: screenHeight * 0.06),
-                _buildWalletLabel(),
-                _buildTotalWalletValue(),
-                _buildPortfolio(),
-                _buildVsTokenButtons(),
-              ],
-            )
-          : const Center(
-              child: CircularProgressIndicator(),
-            ),
+      body: Stack(
+        children: [
+          Positioned(
+            top: screenHeight * 0.035,
+            left: 0,
+            child: _buildInfoIcon(),
+          ),
+          Center(
+            child: _apiError
+                ? const Text(
+                    "Solana API timed-out. Please try visiting your portfolio again a little while.",
+                    style: TextStyle(color: Colors.white, fontSize: 18),
+                  )
+                : _walletTotalValue != null
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(height: screenHeight * 0.06),
+                          _buildWalletLabel(),
+                          _buildTotalWalletValue(),
+                          _buildPortfolio(),
+                          _buildVsTokenButtons(),
+                        ],
+                      )
+                    : const CircularProgressIndicator(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoIcon() {
+    return IconButton(
+      icon: const Icon(Icons.info_outline),
+      onPressed: () {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) => AlertDialog(
+            title: const Text("Synch da boi"),
+            content: const Text(
+                "Please reconnect wallet if you left and made a trade and came back."),
+            actions: <Widget>[
+              TextButton(
+                child: const Text(
+                  "Cool",
+                  style: TextStyle(color: Colors.black),
+                ),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -465,8 +515,11 @@ class _PortfolioPageState extends State<PortfolioPage> {
                           shape: BoxShape.circle,
                           color: Colors.grey,
                         ),
-                        child: const Center(
-                          child: CircularProgressIndicator(),
+                        child: Center(
+                          child: Text(
+                            vsTokens.WSOL.token.name[0],
+                            style: const TextStyle(color: Colors.white),
+                          ),
                         ),
                       ),
                       height: 35.0,
@@ -481,8 +534,11 @@ class _PortfolioPageState extends State<PortfolioPage> {
                           shape: BoxShape.circle,
                           color: Colors.grey,
                         ),
-                        child: const Center(
-                          child: CircularProgressIndicator(),
+                        child: Center(
+                          child: Text(
+                            vsTokens.WSOL.token.name[0],
+                            style: const TextStyle(color: Colors.white),
+                          ),
                         ),
                       ),
                       errorWidget: (context, url, error) => Container(
@@ -492,8 +548,9 @@ class _PortfolioPageState extends State<PortfolioPage> {
                           shape: BoxShape.circle,
                           color: Colors.grey,
                         ),
-                        child: const Center(
-                          child: Icon(Icons.error, color: Colors.red),
+                        child: Text(
+                          vsTokens.WSOL.token.name[0],
+                          style: const TextStyle(color: Colors.white),
                         ),
                       ),
                       height: 35.0,
@@ -551,8 +608,9 @@ class _PortfolioPageState extends State<PortfolioPage> {
                           shape: BoxShape.circle,
                           color: Colors.grey,
                         ),
-                        child: const Center(
-                          child: CircularProgressIndicator(),
+                        child: Text(
+                          vsTokens.WSOL.token.name[0],
+                          style: const TextStyle(color: Colors.white),
                         ),
                       ),
                       height: 35.0,
@@ -567,8 +625,9 @@ class _PortfolioPageState extends State<PortfolioPage> {
                           shape: BoxShape.circle,
                           color: Colors.grey,
                         ),
-                        child: const Center(
-                          child: CircularProgressIndicator(),
+                        child: Text(
+                          vsTokens.WSOL.token.name[0],
+                          style: const TextStyle(color: Colors.white),
                         ),
                       ),
                       errorWidget: (context, url, error) => Container(
@@ -578,8 +637,9 @@ class _PortfolioPageState extends State<PortfolioPage> {
                           shape: BoxShape.circle,
                           color: Colors.grey,
                         ),
-                        child: const Center(
-                          child: Icon(Icons.error, color: Colors.red),
+                        child: Text(
+                          vsTokens.WSOL.token.name[0],
+                          style: const TextStyle(color: Colors.white),
                         ),
                       ),
                       height: 35.0,
@@ -672,8 +732,9 @@ class _PortfolioPageState extends State<PortfolioPage> {
                           shape: BoxShape.circle,
                           color: Colors.grey,
                         ),
-                        child: const Center(
-                          child: Icon(Icons.error, color: Colors.red),
+                        child: Text(
+                          token.name[0],
+                          style: const TextStyle(color: Colors.white),
                         ),
                       ),
                       height: 35.0,
@@ -731,7 +792,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: vsTokens.values.map((vsToken) {
         return TextButton(
-          onPressed: () {
+          onPressed: () async {
             if (vsToken.token == _vsToken) {
               return;
             }
@@ -740,6 +801,16 @@ class _PortfolioPageState extends State<PortfolioPage> {
               _walletTotalValue = null;
               _vsToken = vsToken.token;
             });
+
+            try {
+              await _getPricesAndUpdateValueInfo(vsToken.token);
+            } catch (e) {
+              if (mounted) {
+                setState(() {
+                  _apiError = true;
+                });
+              }
+            }
           },
           child: Text(
             vsToken.token.unicodeSymbol!,

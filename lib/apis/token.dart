@@ -1,8 +1,5 @@
 import 'dart:convert';
-
 import 'package:simple/domain/common.dart';
-import 'package:solana/solana.dart';
-
 import 'package:http/http.dart' as http;
 
 class TokenModel {
@@ -30,10 +27,8 @@ class TokenModel {
   }
 
   Future<double> fetchSupply() async {
-    final client = RpcClient(mainnetBetaUri);
-
     try {
-      final tokenSupplyResult = await client.getTokenSupply(mint);
+      final tokenSupplyResult = await mainnetClient.getTokenSupply(mint);
 
       final double tokenSupply =
           double.parse(tokenSupplyResult.value.uiAmountString!);
@@ -49,13 +44,9 @@ Future<List<TokenModel>> fetchAllFungibleTokens() async {
 
   try {
     final response = await http.get(url);
+    final data = json.decode(response.body) as List<dynamic>;
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body) as List<dynamic>;
-      return data.map((token) => TokenModel.fromJson(token)).toList();
-    } else {
-      throw Exception('Failed to load tokens: ${response.statusCode}');
-    }
+    return data.map((token) => TokenModel.fromJson(token)).toList();
   } catch (e) {
     throw Exception('Failed fetching all fungible tokens: $e');
   }

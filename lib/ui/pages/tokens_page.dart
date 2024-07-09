@@ -184,28 +184,29 @@ class _TokensPageState extends State<TokensPage> {
                 ),
               ),
               const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      token.name,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16.0,
-                        fontWeight: FontWeight.bold,
-                      ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    token.name,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16.0,
+                      fontWeight: FontWeight.bold,
                     ),
-                    const SizedBox(height: 5),
-                    Text(
-                      '${vsToken.unicodeSymbol}${solanaNumberFormat.format(tokenPrice)}/${token.symbol}', //overflows if token.symbol is really long idc tho
-                      style: const TextStyle(
-                        color: Colors.grey,
-                        fontSize: 14.0,
-                      ),
+                  ),
+                  const SizedBox(height: 5),
+                  //TODO make not overflow
+                  Text(
+                    '${vsToken.unicodeSymbol}${solanaNumberFormat.format(tokenPrice)}/${token.symbol}',
+                    style: const TextStyle(
+                      color: Colors.grey,
+                      fontSize: 14.0,
                     ),
-                  ],
-                ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),

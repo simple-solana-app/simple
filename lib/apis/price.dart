@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:simple/domain/common.dart';
 import 'package:http/http.dart' as http;
 
@@ -42,6 +41,7 @@ Future<Map<String, double>> fetchPrices(
     pricesMap.forEach((key, value) {
       tokenPrices[value['id']] = (value['price'] as num).toDouble();
     });
+
     return tokenPrices;
   } catch (e) {
     throw Exception('fetching Prices failed $e');

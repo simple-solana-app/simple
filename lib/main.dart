@@ -32,10 +32,10 @@ class _AllFungibleTokensWrapperState extends State<AllFungibleTokensWrapper> {
   void initState() {
     super.initState();
 
-    _fetchAllFungibleTokens();
+    _getAllFungibleTokens();
   }
 
-  Future<void> _fetchAllFungibleTokens() async {
+  Future<void> _getAllFungibleTokens() async {
     try {
       var tokens = await fetchAllFungibleTokens();
       setState(() {
@@ -61,7 +61,7 @@ class _AllFungibleTokensWrapperState extends State<AllFungibleTokensWrapper> {
             setState(() {
               isLoading = true;
             });
-            _fetchAllFungibleTokens();
+            _getAllFungibleTokens();
           },
         ),
       ),

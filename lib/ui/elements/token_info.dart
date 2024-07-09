@@ -150,7 +150,10 @@ class _TokenInfoState extends State<TokenInfo> {
                 child: Center(
                   child: Text(
                     widget.token.name[0],
-                    style: const TextStyle(color: Colors.white),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 60,
+                    ),
                   ),
                 ),
               ),
@@ -169,7 +172,10 @@ class _TokenInfoState extends State<TokenInfo> {
                 child: Center(
                   child: Text(
                     widget.token.name[0],
-                    style: const TextStyle(color: Colors.white),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 60, // Assuming the original font size is 14
+                    ),
                   ),
                 ),
               ),
@@ -180,8 +186,14 @@ class _TokenInfoState extends State<TokenInfo> {
                   shape: BoxShape.circle,
                   color: Colors.grey,
                 ),
-                child: const Center(
-                  child: Icon(Icons.error, color: Colors.white),
+                child: Center(
+                  child: Text(
+                    widget.token.name[0],
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 60, // Assuming the original font size is 14
+                    ),
+                  ),
                 ),
               ),
               height: 150,
