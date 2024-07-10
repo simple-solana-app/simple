@@ -40,7 +40,7 @@ class TokenModel {
 }
 
 Future<List<TokenModel>> fetchAllFungibleTokens() async {
-  final url = Uri.parse(jupAllTokensBaseUri);
+  final url = Uri.parse(jupAllTokensUri);
 
   try {
     final response = await http.get(url);

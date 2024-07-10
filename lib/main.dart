@@ -26,7 +26,6 @@ class AllFungibleTokensWrapper extends StatefulWidget {
 
 class _AllFungibleTokensWrapperState extends State<AllFungibleTokensWrapper> {
   List<TokenModel>? allFungibleTokens;
-  bool isLoading = true;
 
   @override
   void initState() {
@@ -36,41 +35,15 @@ class _AllFungibleTokensWrapperState extends State<AllFungibleTokensWrapper> {
   }
 
   Future<void> _getAllFungibleTokens() async {
-    try {
-      var tokens = await fetchAllFungibleTokens();
-      setState(() {
-        allFungibleTokens = tokens;
-        isLoading = false;
-      });
-    } catch (_) {
-      setState(() {
-        isLoading = false;
-      });
-      _showErrorSnackbar();
-    }
-  }
-
-  void _showErrorSnackbar() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text(
-            'Failed to fetch tokens. Please try again. This literally happens so rarely'),
-        action: SnackBarAction(
-          label: 'Retry',
-          onPressed: () {
-            setState(() {
-              isLoading = true;
-            });
-            _getAllFungibleTokens();
-          },
-        ),
-      ),
-    );
+    var tokens = await fetchAllFungibleTokens();
+    setState(() {
+      allFungibleTokens = tokens;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
+    if (allFungibleTokens == null) {
       return const Center(child: CircularProgressIndicator());
     } else {
       return MainApp(allFungibleTokens: allFungibleTokens!);

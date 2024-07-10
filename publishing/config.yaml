@@ -1,0 +1,41 @@
+publisher:
+  name: Developer Previously Known As Preferring To Remain Pseudonymous
+  address: ''
+  website: https://simple-solana-app.github.io/
+  email: simplesolanaapp@gmail.com
+  media:
+    - purpose: icon
+      uri: ./media/512x512_logo.png
+app:
+  name: simple
+  address: ''
+  android_package: simple.solana.app
+  urls:
+    license_url: https://github.com/simple-solana-app/simple/blob/master/LICENSE
+    copyright_url: https://github.com/simple-solana-app/simple/blob/master/LICENSE
+    privacy_policy_url: https://github.com/simple-solana-app/simple/blob/master/PRIVACY_POLICY.md
+    website: https://simple-solana-app.github.io/
+  media:
+    - purpose: icon
+      uri: ./media/512x512_logo.png
+release:
+  address: ''
+  media:
+    - purpose: icon
+      uri: ./media/512x512_logo.png
+    - purpose: screenshot
+      uri: ./media/tokens_page.png
+    - purpose: screenshot
+      uri: ./media/portfolio_page.png
+    - purpose: screenshot
+      uri: ./media/price_with_graph.png
+    - purpose: screenshot
+      uri: ./media/token_info.png
+  files:
+    - purpose: install
+      uri: ./files/app-release.apk
+  catalog:
+    en-US:
+      name: simple
+      short_description: Where the superfluous go to die.
+
