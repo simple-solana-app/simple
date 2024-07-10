@@ -9,8 +9,10 @@
 .history
 .svn/
 migrate_working_dir/
+
+#Key Signing, Safety no. 1 priority kids.
 *.keystore
-*.gradle
+/android/app/build.gradle
 
 # IntelliJ related
 *.iml
