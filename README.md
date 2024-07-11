@@ -1,3 +1,3 @@
 # simple
 
-Nothing to read here. There's a bunch of code if you wanna read it tho.
+To run the code locally you'll have to source yourself a `/android/app/build.gradle` from somewhere. :'(

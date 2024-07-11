@@ -206,9 +206,22 @@ class _TokenPairWithGraphState extends State<TokenPairWithGraph> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SizedBox(
-                    width: 27.9,
+                  SizedBox(
+                    width: 35,
+                    height: 35,
+                    child: ClipOval(
+                      child: CachedNetworkImage(
+                        imageUrl: widget.vsToken.logo,
+                        placeholder: (context, url) =>
+                            _buildCircularImagePlaceholder(widget.vsToken),
+                        errorWidget: (context, url, error) =>
+                            _buildCircularImagePlaceholder(widget.vsToken),
+                        fit: BoxFit.contain,
+                      ),
+                    ),
                   ),
+                  const SizedBox(width: 10),
+
                   //TODO make these not overflow
                   ElevatedButton(
                     onPressed: () =>

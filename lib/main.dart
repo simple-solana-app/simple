@@ -7,6 +7,7 @@ import 'package:simple/ui/elements/dropdown_token_search.dart';
 import 'package:simple/ui/pages/portfolio_page.dart';
 import 'package:simple/ui/pages/tokens_page.dart';
 import 'package:solana_wallet_adapter/solana_wallet_adapter.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,6 +15,17 @@ void main() {
     DeviceOrientation.portraitUp,
   ]);
   runApp(const AllFungibleTokensWrapper());
+}
+
+mixin AppLocale {
+  static const String title = 'title';
+  static const String thisIs = 'thisIs';
+
+  // ignore: constant_identifier_names
+  static const Map<String, dynamic> EN = {
+    title: 'Localization',
+    thisIs: 'This is %a package, version %a.',
+  };
 }
 
 class AllFungibleTokensWrapper extends StatefulWidget {
@@ -60,6 +72,8 @@ class MainApp extends StatefulWidget {
 }
 
 class _MainAppState extends State<MainApp> {
+  final FlutterLocalization _localization = FlutterLocalization.instance;
+
   Future<void>? _walletFuture;
   final SolanaWalletAdapter adapter = SolanaWalletAdapter(
     AppIdentity(
@@ -83,6 +97,15 @@ class _MainAppState extends State<MainApp> {
   @override
   void initState() {
     super.initState();
+
+    _localization.init(mapLocales: [
+      const MapLocale(
+        'en',
+        AppLocale.EN,
+        countryCode: 'US',
+        fontFamily: 'Font EN',
+      ),
+    ], initLanguageCode: 'en');
 
     _initializeWallet();
   }
@@ -109,6 +132,8 @@ class _MainAppState extends State<MainApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      supportedLocales: _localization.supportedLocales,
+      localizationsDelegates: _localization.localizationsDelegates,
       theme: ThemeData(
           scaffoldBackgroundColor: Colors
               .transparent // I don't wanna spend too much time on this, but this makes the background not that ugly blue in recent apps
@@ -178,11 +203,11 @@ class _MainAppState extends State<MainApp> {
               ),
               Positioned(
                   bottom: screenHeight * 0.08,
-                  left: screenWidth * 0.255,
+                  left: screenWidth * 0.252,
                   child: _buildInfoIcon(context)),
               Positioned(
                   bottom: screenHeight * 0.018,
-                  left: screenWidth * 0.237,
+                  left: screenWidth * 0.233,
                   child: _buildSearchButton(context)),
               Positioned(
                   bottom: screenHeight * 0.03,
@@ -190,7 +215,7 @@ class _MainAppState extends State<MainApp> {
                   child: _buildJupButton(context)),
               Positioned(
                   bottom: screenHeight * 0.068,
-                  left: screenWidth * 0.423,
+                  left: screenWidth * 0.425,
                   child: _buildTokensNavButton()),
               Positioned(
                   bottom: screenHeight * 0.0253,

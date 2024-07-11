@@ -1,6 +1,6 @@
 publisher:
-  name: Developer Previously Known As Preferring To Remain Pseudonymous
-  address: ''
+  name: Pseudonymous Developer
+  address: 5hTcgxmxYJsWn6n3MWxKuWB482GW9fJxoa7GYWhZ7sjc
   website: https://simple-solana-app.github.io/
   email: simplesolanaapp@gmail.com
   media:
@@ -8,7 +8,7 @@ publisher:
       uri: ./media/512x512_logo.png
 app:
   name: simple
-  address: ''
+  address: 9C5FhWjjhH5G3RcM2V9VFCDDTQ9vnu1EthE8HmXJe14H
   android_package: simple.solana.app
   urls:
     license_url: https://github.com/simple-solana-app/simple/blob/master/LICENSE
@@ -19,7 +19,7 @@ app:
     - purpose: icon
       uri: ./media/512x512_logo.png
 release:
-  address: ''
+  address: AtXDzXsA8Ta5Xyandk82RSm9YGfHg44J1mcrB96HuHnC
   media:
     - purpose: icon
       uri: ./media/512x512_logo.png
@@ -28,7 +28,7 @@ release:
     - purpose: screenshot
       uri: ./media/portfolio_page.png
     - purpose: screenshot
-      uri: ./media/price_with_graph.png
+      uri: ./media/token_price_with_graph.png
     - purpose: screenshot
       uri: ./media/token_info.png
   files:
@@ -37,5 +37,16 @@ release:
   catalog:
     en-US:
       name: simple
-      short_description: Where the superfluous go to die.
-
+      short_description: It's ◎h s◎ simple!
+      long_description: Where the superfluous go to die.
+      new_in_version: The app as a whole.
+      saga_features: The whole app.
+solana_mobile_dapp_publisher_portal:
+  google_store_package: simple.solana.app
+  testing_instructions: Nothing specific comes to mind
+lastSubmittedVersionOnChain:
+  address: AtXDzXsA8Ta5Xyandk82RSm9YGfHg44J1mcrB96HuHnC
+  version_code: 1
+  apk_hash: Mz1iqLNJyhnsbX4yTZ/qvlAUCpspp465tPY9+aeZG/4=
+lastUpdatedVersionOnStore:
+  address: AtXDzXsA8Ta5Xyandk82RSm9YGfHg44J1mcrB96HuHnC

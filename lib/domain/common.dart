@@ -2,7 +2,7 @@ import 'package:intl/intl.dart';
 import 'package:solana/solana.dart';
 
 const String simpleWebsiteAddress = "simple-solana-app.github.io";
-const String simpleLogoUri = "../logo.png";
+const String simpleLogoUri = "assets/512x512_logo.png";
 
 const String mainnetBetaUri = 'https://api.mainnet-beta.solana.com';
 RpcClient mainnetClient = RpcClient(mainnetBetaUri);
