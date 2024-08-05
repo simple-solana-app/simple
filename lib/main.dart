@@ -2,6 +2,7 @@ import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:simple/apis/token.dart';
+import 'package:simple/client.dart';
 import 'package:simple/domain/common.dart';
 import 'package:simple/ui/elements/dropdown_token_search.dart';
 import 'package:simple/ui/pages/portfolio_page.dart';
@@ -14,6 +15,7 @@ void main() {
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
   ]);
+
   runApp(const AllFungibleTokensWrapper());
 }
 
@@ -38,6 +40,7 @@ class AllFungibleTokensWrapper extends StatefulWidget {
 
 class _AllFungibleTokensWrapperState extends State<AllFungibleTokensWrapper> {
   List<TokenModel>? allFungibleTokens;
+  late String tx;
 
   @override
   void initState() {
@@ -48,8 +51,11 @@ class _AllFungibleTokensWrapperState extends State<AllFungibleTokensWrapper> {
 
   Future<void> _getAllFungibleTokens() async {
     var tokens = await fetchAllFungibleTokens();
+    var tx = await invokeProgram();
     setState(() {
       allFungibleTokens = tokens;
+      tx = tx;
+      print(tx);
     });
   }
 
