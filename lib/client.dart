@@ -15,7 +15,7 @@ Future<String> invokeProgram() async {
   //
   final airdropSignature = await connection.requestAirdrop(
     user.pubkey,
-    1000000000,
+    2000000000,
   );
   await connection.confirmTransaction(airdropSignature);
   //
