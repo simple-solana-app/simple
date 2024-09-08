@@ -7,29 +7,30 @@ import 'package:flutter_svg/svg.dart';
 import 'package:simple/apis/price.dart';
 import 'package:simple/apis/rpc.dart';
 import 'package:simple/apis/token.dart';
-import 'package:simple/domain/common.dart';
+import 'package:simple/common.dart';
 import 'package:simple/domain/vs_tokens.dart';
 import 'package:simple/ui/elements/token_info.dart';
-import 'package:solana/dto.dart';
+import 'package:solana/src/rpc/dto/program_account.dart' as ProgramAccount;
+import 'package:solana_wallet_provider/solana_wallet_provider.dart';
 
 class PortfolioPage extends StatefulWidget {
-  final List<TokenModel> allFungibleTokens;
-
-  final String walletLabel;
-  final String walletAddress;
-
   const PortfolioPage({
     super.key,
     required this.allFungibleTokens,
-    required this.walletLabel,
-    required this.walletAddress,
+    required this.provider,
   });
+
+  final List<TokenModel> allFungibleTokens;
+  final SolanaWalletProvider provider;
 
   @override
   State<PortfolioPage> createState() => _PortfolioPageState();
 }
 
 class _PortfolioPageState extends State<PortfolioPage> {
+  late String walletAddress;
+  late String walletLabel;
+
   late Timer _timer;
 
   bool _apiError = false;
@@ -66,6 +67,9 @@ class _PortfolioPageState extends State<PortfolioPage> {
   void initState() {
     super.initState();
 
+    walletAddress = widget.provider.connectedAccount!.address;
+    walletLabel = widget.provider.connectedAccount!.label!;
+
     _initializePortfolio();
   }
 
@@ -93,8 +97,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
   }
 
   void _getWalletSolanaBalance() async {
-    double walletSolanaBalance =
-        await fetchAccountSolanaBalance(widget.walletAddress);
+    double walletSolanaBalance = await fetchAccountSolanaBalance(walletAddress);
 
     if (mounted) {
       setState(() {
@@ -105,7 +108,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
 
   void _getWalletTotalStakedSolana() async {
     double walletTotalStakedSolana =
-        await fetchAccountTotalStakedSol(widget.walletAddress);
+        await fetchAccountTotalStakedSol(walletAddress);
 
     if (mounted) {
       setState(() {
@@ -115,8 +118,8 @@ class _PortfolioPageState extends State<PortfolioPage> {
   }
 
   void _getAllFungibleAndNonFungibleTokensInWallet() async {
-    List<ProgramAccount> tokenAccounts =
-        await fetchTokenAccounts(widget.walletAddress);
+    List<ProgramAccount.ProgramAccount> tokenAccounts =
+        await fetchTokenAccounts(walletAddress);
     Map<String, dynamic> walletTokenAccountsWithMints = {};
 
     if (tokenAccounts.isNotEmpty) {
@@ -139,8 +142,8 @@ class _PortfolioPageState extends State<PortfolioPage> {
       }
     }
 
-    List<ProgramAccount> token2022Accounts =
-        await fetchToken2022Accounts(widget.walletAddress);
+    List<ProgramAccount.ProgramAccount> token2022Accounts =
+        await fetchToken2022Accounts(walletAddress);
     Map<String, dynamic> walletToken2022AccountsWithMints = {};
 
     if (token2022Accounts.isNotEmpty) {
@@ -367,7 +370,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            widget.walletLabel,
+            walletLabel,
             style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -377,10 +380,10 @@ class _PortfolioPageState extends State<PortfolioPage> {
           ),
           GestureDetector(
             onLongPress: () {
-              Clipboard.setData(ClipboardData(text: widget.walletAddress));
+              Clipboard.setData(ClipboardData(text: walletAddress));
             },
             child: Text(
-              widget.walletAddress,
+              walletAddress,
               style: const TextStyle(
                 fontSize: 12,
                 color: Colors.white,

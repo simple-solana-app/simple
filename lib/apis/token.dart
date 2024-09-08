@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:simple/domain/common.dart';
+import 'package:simple/common.dart';
 import 'package:http/http.dart' as http;
 
 class TokenModel {

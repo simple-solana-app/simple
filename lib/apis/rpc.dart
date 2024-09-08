@@ -1,5 +1,5 @@
 import 'dart:typed_data';
-import 'package:simple/domain/common.dart';
+import 'package:simple/common.dart';
 import 'package:solana/base58.dart';
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';

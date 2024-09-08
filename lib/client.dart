@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:simple/domain/common.dart';
+import 'package:simple/common.dart';
 import 'package:solana_web3/solana_web3.dart' as web3;
 
 //TODO check for user claim tracker account, create if doesn't exist,
@@ -20,7 +20,7 @@ Future<String> invokeProgram() async {
   await connection.confirmTransaction(airdropSignature);
   //
 
-  final instruction = web3.TransactionInstruction(
+  final ix = web3.TransactionInstruction(
     programId: programId,
     keys: [],
     data: Uint8List(0),
@@ -29,7 +29,7 @@ Future<String> invokeProgram() async {
   final message = web3.Message.compile(
     version: 0,
     payer: user.pubkey,
-    instructions: [instruction],
+    instructions: [ix],
     recentBlockhash: recentBlockhash,
   );
 

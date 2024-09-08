@@ -7,7 +7,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:simple/apis/price.dart';
 import 'package:simple/apis/rpc.dart';
 import 'package:simple/apis/token.dart';
-import 'package:simple/domain/common.dart';
+import 'package:simple/common.dart';
 import 'package:simple/domain/vs_tokens.dart';
 import 'package:simple/ui/elements/dropdown_token_search.dart';
 
