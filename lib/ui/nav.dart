@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:simple/apis/token.dart';
 import 'package:simple/ui/elements/dropdown_token_search.dart';
 import 'package:simple/ui/pages/portfolio_page.dart';
+import 'package:simple/ui/pages/protocol_page.dart';
 import 'package:simple/ui/pages/tokens_page.dart';
 import 'package:solana_wallet_provider/solana_wallet_provider.dart';
 
@@ -75,7 +76,8 @@ class _NavScreenState extends State<NavScreen> {
     double screenHeight = MediaQuery.of(context).size.height;
     double screenWidth = MediaQuery.of(context).size.width;
 
-    return Column(
+    return Scaffold(
+      body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
@@ -89,6 +91,9 @@ class _NavScreenState extends State<NavScreen> {
                         children: [
                           TokensPage(
                             allFungibleTokens: widget.allFungibleTokens,
+                          ),
+                          ProtocolPage(
+                            provider: widget.provider,
                           ),
                           PortfolioPage(
                             allFungibleTokens: widget.allFungibleTokens,
@@ -145,11 +150,22 @@ class _NavScreenState extends State<NavScreen> {
                   ),
                 ),
                 Positioned(
-                  bottom: screenHeight * 0.0253,
+                  bottom: screenHeight * 0.028,
                   left: screenWidth * 0.447,
                   child: TextButton(
                     onPressed: () => setState(() {
                       _navIndex = 1;
+                    }),
+                    child: const Text("Protocol",
+                        style: TextStyle(fontSize: 18, color: Colors.white)),
+                  ),
+                ),
+                Positioned(
+                  bottom: screenHeight * 0.0053,
+                  left: screenWidth * 0.440,
+                  child: TextButton(
+                    onPressed: () => setState(() {
+                      _navIndex = 2;
                     }),
                     child: const Text("Portfolio",
                         style: TextStyle(fontSize: 18, color: Colors.white)),
@@ -179,6 +195,7 @@ class _NavScreenState extends State<NavScreen> {
             ),
           ),
         ],
-      );
+      ),
+    );
   }
 }

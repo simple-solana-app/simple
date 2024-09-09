@@ -70,7 +70,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
     walletAddress = widget.provider.connectedAccount!.address;
     walletLabel = widget.provider.connectedAccount!.label!;
 
-    _initializePortfolio();
+    //_initializePortfolio();
   }
 
   void _initializePortfolio() {

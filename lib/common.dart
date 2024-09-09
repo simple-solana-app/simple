@@ -12,6 +12,9 @@ final AppIdentity simpleIdentity = AppIdentity(
     icon: Uri.parse(simpleLogoUri),
     name: 'simple');
 
+final Pubkey programId =
+    Pubkey.fromBase58('6yUtbQXotEAbzJBHLghordn9r3vZ8wRuCbFBxMaatVoF');
+
 const String mainnetBetaUri = 'https://api.mainnet-beta.solana.com';
 RpcClient mainnetClient = RpcClient(mainnetBetaUri);
 
@@ -24,5 +27,3 @@ const String jupPricesBaseUri = 'https://price.jup.ag/v4/price?ids=';
 
 final NumberFormat defaultNumberFormat = NumberFormat("#,##0.00");
 final NumberFormat solanaNumberFormat = NumberFormat("#,##0.000000000");
-
-final programId = Pubkey.fromBase58('');

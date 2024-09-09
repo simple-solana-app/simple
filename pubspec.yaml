@@ -19,6 +19,7 @@ dependencies:
   flutter_localization: ^0.2.0
   solana_wallet_provider: ^0.1.9
   solana: ^0.31.0
+  crypto: ^3.0.5
 dev_dependencies:
   flutter_test:
     sdk: flutter

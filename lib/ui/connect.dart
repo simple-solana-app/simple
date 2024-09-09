@@ -19,27 +19,31 @@ class _ConnectScreenState extends State<ConnectScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const Text(
-            'simply',
-            style: TextStyle(
-                color: Colors.white, fontSize: 22, fontStyle: FontStyle.italic),
-          ),
-          ElevatedButton(
-            onPressed: () => _connect(
-              context,
-              widget.provider,
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const Text(
+              'simply',
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontStyle: FontStyle.italic),
             ),
-            child: const Text(
-              'Connect',
-              style: TextStyle(color: Colors.black, fontSize: 18),
+            ElevatedButton(
+              onPressed: () => _connect(
+                context,
+                widget.provider,
+              ),
+              child: const Text(
+                'Connect',
+                style: TextStyle(color: Colors.black, fontSize: 18),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

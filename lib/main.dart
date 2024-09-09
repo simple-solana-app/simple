@@ -113,17 +113,13 @@ class _SimpleAppState extends State<SimpleApp> {
                 SolanaWalletProvider.of(context);
 
             if (provider.adapter.isAuthorized) {
-              return Scaffold(
-                body: NavScreen(
-                  allFungibleTokens: widget.allFungibleTokens,
-                  provider: provider,
-                ),
+              return NavScreen(
+                allFungibleTokens: widget.allFungibleTokens,
+                provider: provider,
               );
             } else {
-              return Scaffold(
-                body: ConnectScreen(
-                  provider: provider,
-                ),
+              return ConnectScreen(
+                provider: provider,
               );
             }
           }),
