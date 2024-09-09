@@ -1,10 +1,9 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:simple/common.dart';
-import 'package:solana/dto.dart';
-import 'package:solana/solana.dart';
 import 'package:solana_wallet_provider/solana_wallet_provider.dart';
 
 class ProtocolPage extends StatefulWidget {
@@ -20,26 +19,42 @@ class _ProtocolPageState extends State<ProtocolPage> {
   bool _hasClaimTrackerAccount = false;
   bool _hasSimpleTokenAccount = false;
 
+  late String _recentBlockhash;
+
+  late Pubkey _userClaimTrackerPubkey;
+
   @override
   void initState() {
     super.initState();
 
     _checkClaimTracker();
+    _getRecentBlockHash();
   }
 
   void _checkClaimTracker() async {
+    final account = widget.provider.connectedAccount!;
+    final payerPubkey = Pubkey.fromBase64(account.address);
+    print('Payer Pubkey: ${payerPubkey.toBase58()}');
+
+    // Compute the seed from payerPubkey
+    final seed = utf8.encode(payerPubkey.toBase58().toString());
+
+    // Find the Program Address (PDA) using the seed
     final ProgramAddress userClaimTrackerPdaInfo = Pubkey.findProgramAddress(
       [
-        sha256.convert(utf8.encode(widget.provider.connectedAccount!.address)).bytes,
+        sha256.convert(seed).bytes,
       ],
       programId,
     );
 
-    print('user claim tracker: ${userClaimTrackerPdaInfo.pubkey.toBase58()}');
-
-    AccountInfo? userClaimTrackerAccount = await widget.provider.connection.getAccountInfo(
+    AccountInfo? userClaimTrackerAccount =
+        await widget.provider.connection.getAccountInfo(
       userClaimTrackerPdaInfo.pubkey,
     );
+
+    setState(() {
+      _userClaimTrackerPubkey = userClaimTrackerPdaInfo.pubkey;
+    });
 
     print(userClaimTrackerAccount);
 
@@ -50,9 +65,57 @@ class _ProtocolPageState extends State<ProtocolPage> {
     }
   }
 
-  void _checkSimpleTokenAccount() {}
+  void _getRecentBlockHash() async {
+    final BlockhashWithExpiryBlockHeight recentBlockhashResponse =
+        await widget.provider.connection.getLatestBlockhash();
+    final String recentBlockhash = recentBlockhashResponse.blockhash;
 
-  void _createAccount() {}
+    setState(() {
+      _recentBlockhash = recentBlockhash;
+    });
+  }
+
+  void _checkSimpleTokenAccount() async {}
+
+  void _createAccount() async {
+    try {
+      final account = widget.provider.connectedAccount!;
+      final payerPubkey = Pubkey.fromBase58(account.toBase58());
+      print('Payer Pubkey: ${payerPubkey.toBase58()}');
+
+      final List<AccountMeta> keys = [
+        AccountMeta(payerPubkey, isSigner: true, isWritable: true),
+        AccountMeta(_userClaimTrackerPubkey, isSigner: false, isWritable: true),
+        AccountMeta(SystemProgram.programId,
+            isSigner: false, isWritable: false),
+      ];
+
+      final Uint8List disc =
+          Uint8List.fromList([68, 52, 156, 251, 174, 166, 95, 4]);
+
+      final TransactionInstruction ix = TransactionInstruction(
+        programId: programId,
+        keys: keys,
+        data: disc,
+      );
+
+      final Message msg = Message.compile(
+        version: 0,
+        payer: payerPubkey,
+        recentBlockhash: _recentBlockhash,
+        instructions: [ix],
+      );
+
+      final Transaction tx = Transaction(message: msg);
+
+      // Sign and send the transaction and capture the signature
+      final signature = await widget.provider
+          .signAndSendTransactions(context, transactions: [tx]);
+      print('Transaction signature: ${signature.signatures}');
+    } catch (e) {
+      print('Failed to create account: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
