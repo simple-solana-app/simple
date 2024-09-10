@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:simple/common.dart';
 import 'package:solana_wallet_provider/solana_wallet_provider.dart';
@@ -34,15 +33,11 @@ class _ProtocolPageState extends State<ProtocolPage> {
   void _checkClaimTracker() async {
     final account = widget.provider.connectedAccount!;
     final payerPubkey = Pubkey.fromBase64(account.address);
-    print('Payer Pubkey: ${payerPubkey.toBase58()}');
-
-    // Compute the seed from payerPubkey
-    final seed = utf8.encode(payerPubkey.toBase58().toString());
 
     // Find the Program Address (PDA) using the seed
     final ProgramAddress userClaimTrackerPdaInfo = Pubkey.findProgramAddress(
       [
-        sha256.convert(seed).bytes,
+        payerPubkey.toBytes(),
       ],
       programId,
     );
@@ -80,8 +75,8 @@ class _ProtocolPageState extends State<ProtocolPage> {
   void _createAccount() async {
     try {
       final account = widget.provider.connectedAccount!;
-      final payerPubkey = Pubkey.fromBase58(account.toBase58());
-      print('Payer Pubkey: ${payerPubkey.toBase58()}');
+      final payerPubkey = Pubkey.fromBase64(account.address);
+      print('Payer Pubkey: ${payerPubkey}');
 
       final List<AccountMeta> keys = [
         AccountMeta(payerPubkey, isSigner: true, isWritable: true),

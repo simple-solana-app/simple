@@ -67,7 +67,31 @@ class _TokensPageState extends State<TokensPage> {
         Expanded(
           child: _buildTokensWithPricesList(),
         ),
-        Center(child: _buildVsTokenButtons()),
+        Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: vsTokens.values.map((token) {
+              return TextButton(
+                onPressed: () {
+                  if (mounted) {
+                    _getPrices(token.token).then((_) {
+                      setState(() {
+                        vsToken = token.token;
+                      });
+                    });
+                  }
+                },
+                child: Text(
+                  token.token.unicodeSymbol!,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    color: Colors.grey,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
       ],
     );
   }
@@ -211,32 +235,6 @@ class _TokensPageState extends State<TokensPage> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildVsTokenButtons() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: vsTokens.values.map((token) {
-        return TextButton(
-          onPressed: () {
-            if (mounted) {
-              _getPrices(token.token).then((_) {
-                setState(() {
-                  vsToken = token.token;
-                });
-              });
-            }
-          },
-          child: Text(
-            token.token.unicodeSymbol!,
-            style: const TextStyle(
-              fontSize: 18,
-              color: Colors.grey,
-            ),
-          ),
-        );
-      }).toList(),
     );
   }
 }
