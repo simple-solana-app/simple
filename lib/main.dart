@@ -13,7 +13,7 @@ void main() {
     DeviceOrientation.portraitUp,
   ]);
 
-  runApp(const AllFungibleTokensWrapper());
+  runApp(const SimpleApp());
 }
 
 mixin AppLocale {
@@ -27,46 +27,10 @@ mixin AppLocale {
   };
 }
 
-class AllFungibleTokensWrapper extends StatefulWidget {
-  const AllFungibleTokensWrapper({super.key});
-
-  @override
-  State<AllFungibleTokensWrapper> createState() =>
-      _AllFungibleTokensWrapperState();
-}
-
-class _AllFungibleTokensWrapperState extends State<AllFungibleTokensWrapper> {
-  List<TokenModel>? allFungibleTokens;
-  late String tx;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _getAllFungibleTokens();
-  }
-
-  void _getAllFungibleTokens() async {
-    var tokens = await fetchAllFungibleTokens();
-    setState(() {
-      allFungibleTokens = tokens;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (allFungibleTokens == null) {
-      return const Center(child: CircularProgressIndicator());
-    } else {
-      return SimpleApp(allFungibleTokens: allFungibleTokens!);
-    }
-  }
-}
-
 class SimpleApp extends StatefulWidget {
-  const SimpleApp({super.key, required this.allFungibleTokens});
-
-  final List<TokenModel> allFungibleTokens;
+  const SimpleApp({
+    super.key,
+  });
 
   @override
   State<SimpleApp> createState() => _SimpleAppState();
@@ -114,7 +78,6 @@ class _SimpleAppState extends State<SimpleApp> {
 
             if (provider.adapter.isAuthorized) {
               return NavScreen(
-                allFungibleTokens: widget.allFungibleTokens,
                 provider: provider,
               );
             } else {

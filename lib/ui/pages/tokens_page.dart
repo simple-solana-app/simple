@@ -22,10 +22,12 @@ class TokensPage extends StatefulWidget {
 
 class _TokensPageState extends State<TokensPage> {
   late Timer _timer;
+  bool columnRendered = false;
 
-  late String _ninetyNineTokenAddressConcatenated;
   TokenModel vsToken = vsTokens.USDC.token;
-  Map<String, double> _tokensWithPrices = {};
+
+  Map<String, double>? _tokenMintsWithNotNullPrices;
+  List<TokenModel>? _allNonNullPricedTokens;
 
   @override
   void dispose() {
@@ -38,9 +40,6 @@ class _TokensPageState extends State<TokensPage> {
   void initState() {
     super.initState();
 
-    _ninetyNineTokenAddressConcatenated =
-        widget.allFungibleTokens.map((token) => token.mint).take(99).join(',');
-
     _getPrices(vsToken);
 
     _timer = Timer.periodic(
@@ -48,41 +47,225 @@ class _TokensPageState extends State<TokensPage> {
   }
 
   Future<void> _getPrices(TokenModel vsToken) async {
+    final String ninetyNineTokenAddressConcatenated =
+        widget.allFungibleTokens.map((token) => token.mint).take(99).join(',');
+
     await fetchPrices(
-      _ninetyNineTokenAddressConcatenated,
+      ninetyNineTokenAddressConcatenated,
       vsToken.mint,
-    ).then((prices) {
+    ).then((tokenMintsWithPrices) {
       if (mounted) {
         setState(() {
-          _tokensWithPrices = prices;
+          _filterOutNullPricedTokens(tokenMintsWithPrices);
         });
       }
     });
   }
 
+  void _filterOutNullPricedTokens(
+      Map<String, double> tokenMintsWithPrices) async {
+    List<TokenModel> tokens = widget.allFungibleTokens
+        .where((token) => tokenMintsWithPrices[token.mint] != null)
+        .toList();
+
+    final String nonNullPricedTokenAddressConcatenated =
+        tokens.map((token) => token.mint).join(',');
+
+    await fetchPrices(
+      nonNullPricedTokenAddressConcatenated,
+      vsToken.mint,
+    ).then((prices) {
+      setState(() {
+        _allNonNullPricedTokens = tokens;
+        _tokenMintsWithNotNullPrices = prices;
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_tokenMintsWithNotNullPrices == null ||
+        _allNonNullPricedTokens == null) {
+      return const SizedBox.shrink();
+    }
+
     return Column(
       children: [
         Expanded(
-          child: _buildTokensWithPricesList(),
+          child: Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  itemCount: _allNonNullPricedTokens!.length + 1,
+                  itemBuilder: (context, index) {
+                    if (index < _allNonNullPricedTokens!.length) {
+                      TokenModel token = _allNonNullPricedTokens![index];
+                      double price = _tokenMintsWithNotNullPrices![token.mint]!;
+
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => TokenPairWithGraph(
+                                token: token,
+                                vsToken: vsToken,
+                                allFungibleTokens: widget.allFungibleTokens,
+                              ),
+                            ),
+                          );
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: SizedBox(
+                            height: 50,
+                            child: Row(
+                              children: [
+                                ClipOval(
+                                  child: token.logo.endsWith('.svg')
+                                      ? SvgPicture.network(
+                                          token.logo,
+                                          placeholderBuilder: (context) =>
+                                              Container(
+                                            width: 35.0,
+                                            height: 35.0,
+                                            decoration: const BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: Colors.grey,
+                                            ),
+                                            child: Center(
+                                              child: Text(
+                                                token.name[0],
+                                                style: const TextStyle(
+                                                    color: Colors.white),
+                                              ),
+                                            ),
+                                          ),
+                                          height: 35.0,
+                                          width: 35.0,
+                                        )
+                                      : CachedNetworkImage(
+                                          imageUrl: token.logo,
+                                          placeholder: (context, url) =>
+                                              Container(
+                                            width: 35.0,
+                                            height: 35.0,
+                                            decoration: const BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: Colors.grey,
+                                            ),
+                                            child: Center(
+                                              child: Text(
+                                                token.name[0],
+                                                style: const TextStyle(
+                                                    color: Colors.white),
+                                              ),
+                                            ),
+                                          ),
+                                          errorWidget: (context, url, error) =>
+                                              Container(
+                                            width: 35.0,
+                                            height: 35.0,
+                                            decoration: const BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: Colors.grey,
+                                            ),
+                                            child: Center(
+                                              child: Text(
+                                                token.name[0],
+                                                style: const TextStyle(
+                                                    color: Colors.white),
+                                              ),
+                                            ),
+                                          ),
+                                          height: 35.0,
+                                          width: 35.0,
+                                          fit: BoxFit.cover,
+                                        ),
+                                ),
+                                const SizedBox(width: 10),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      token.name,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16.0,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 5),
+                                    //TODO make not overflow
+                                    Text(
+                                      '${vsToken.unicodeSymbol}${solanaNumberFormat.format(price)}/${token.symbol}',
+                                      style: const TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 14.0,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    } else {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (!columnRendered) {
+                          setState(() {
+                            columnRendered = true;
+                          });
+                        }
+                      });
+
+                      if (columnRendered) {
+                        return const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Text(
+                            "I can't get the price of every token at once, you can search for any token though.",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        );
+                      } else {
+                        // column renders p quick
+                        return const SizedBox.shrink();
+                      }
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
         Center(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: vsTokens.values.map((token) {
+            children: vsTokens.values.map((t) {
               return TextButton(
                 onPressed: () {
                   if (mounted) {
-                    _getPrices(token.token).then((_) {
+                    _getPrices(t.token).then((_) {
                       setState(() {
-                        vsToken = token.token;
+                        vsToken = t.token;
                       });
                     });
                   }
                 },
+                style: ButtonStyle(
+                  overlayColor: WidgetStateProperty.resolveWith<Color?>(
+                    (Set<WidgetState> states) {
+                      if (states.contains(WidgetState.pressed)) {
+                        return Colors.grey.withOpacity(0.1);
+                      }
+                      return null;
+                    },
+                  ),
+                ),
                 child: Text(
-                  token.token.unicodeSymbol!,
+                  t.token.unicodeSymbol!,
                   style: const TextStyle(
                     fontSize: 18,
                     color: Colors.grey,
@@ -91,150 +274,8 @@ class _TokensPageState extends State<TokensPage> {
               );
             }).toList(),
           ),
-        ),
+        )
       ],
-    );
-  }
-
-  Widget _buildTokensWithPricesList() {
-    bool columnRendered = false;
-
-    // filter out tokens with null prices or they'll never load into TokenPair
-    List<TokenModel> tokensWithPrices = widget.allFungibleTokens.where((token) {
-      return _tokensWithPrices[token.mint] != null;
-    }).toList();
-
-    return Column(
-      children: [
-        Expanded(
-          child: ListView.builder(
-            itemCount: tokensWithPrices.length + 1,
-            itemBuilder: (context, index) {
-              if (index < tokensWithPrices.length) {
-                TokenModel token = tokensWithPrices[index];
-                double tokenPrice = _tokensWithPrices[token.mint]!;
-
-                return _buildTokenWithPriceListItem(vsToken, token, tokenPrice);
-              } else {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (!columnRendered) {
-                    setState(() {
-                      columnRendered = true;
-                    });
-                  }
-                });
-
-                if (columnRendered) {
-                  return const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text(
-                      "I can't get the price of every token at once, you can search for any token though.",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  );
-                } else {
-                  // column renders p quick
-                  return Container();
-                }
-              }
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  // tokenPrice won't ever be null bc all tokenPrices have been filtered out, still getting passed a nullable var tho
-  Widget _buildTokenWithPriceListItem(
-      TokenModel vsToken, TokenModel token, double tokenPrice) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => TokenPairWithGraph(
-              token: token,
-              vsToken: vsToken,
-              allFungibleTokens: widget.allFungibleTokens,
-            ),
-          ),
-        );
-      },
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: SizedBox(
-          height: 50,
-          child: Row(
-            children: [
-              ClipOval(
-                child: SizedBox(
-                  width: 35,
-                  height: 35,
-                  child: token.logo.endsWith('.svg')
-                      ? SvgPicture.network(
-                          token.logo,
-                          placeholderBuilder: (context) => Container(
-                            color: Colors.grey,
-                            child: Center(
-                              child: Text(
-                                token.name[0],
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ),
-                        )
-                      : CachedNetworkImage(
-                          imageUrl: token.logo,
-                          placeholder: (context, url) => Container(
-                            color: Colors.grey,
-                            child: Center(
-                              child: Text(
-                                token.name[0],
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ),
-                          errorWidget: (context, url, error) => Container(
-                            color: Colors.grey,
-                            child: Center(
-                              child: Text(
-                                token.name[0],
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ),
-                          fit: BoxFit.contain,
-                        ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    token.name,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16.0,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  //TODO make not overflow
-                  Text(
-                    '${vsToken.unicodeSymbol}${solanaNumberFormat.format(tokenPrice)}/${token.symbol}',
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14.0,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

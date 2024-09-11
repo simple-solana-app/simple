@@ -8,10 +8,8 @@ import 'package:simple/ui/pages/tokens_page.dart';
 import 'package:solana_wallet_provider/solana_wallet_provider.dart';
 
 class NavScreen extends StatefulWidget {
-  const NavScreen(
-      {super.key, required this.allFungibleTokens, required this.provider});
+  const NavScreen({super.key, required this.provider});
 
-  final List<TokenModel> allFungibleTokens;
   final SolanaWalletProvider provider;
 
   @override
@@ -20,6 +18,23 @@ class NavScreen extends StatefulWidget {
 
 class _NavScreenState extends State<NavScreen> {
   int _navIndex = 0;
+
+  List<TokenModel>? allFungibleTokens;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _getAllFungibleTokens();
+  }
+
+  void _getAllFungibleTokens() async {
+    var tokens = await fetchAllFungibleTokens();
+
+    setState(() {
+      allFungibleTokens = tokens;
+    });
+  }
 
   void _showInfoDialog(final BuildContext context) {
     showDialog(
@@ -50,7 +65,7 @@ class _NavScreenState extends State<NavScreen> {
     showDialog(
         context: context,
         builder: (context) =>
-            DropDownTokenSearch(allFungibleTokens: widget.allFungibleTokens));
+            DropDownTokenSearch(allFungibleTokens: allFungibleTokens!));
   }
 
   void _launchJupAgUrl(final BuildContext context) async {
@@ -76,6 +91,12 @@ class _NavScreenState extends State<NavScreen> {
     double screenHeight = MediaQuery.of(context).size.height;
     double screenWidth = MediaQuery.of(context).size.width;
 
+    if (allFungibleTokens == null) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
     return Scaffold(
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -90,13 +111,13 @@ class _NavScreenState extends State<NavScreen> {
                         index: _navIndex,
                         children: [
                           TokensPage(
-                            allFungibleTokens: widget.allFungibleTokens,
+                            allFungibleTokens: allFungibleTokens!,
                           ),
                           ProtocolPage(
                             provider: widget.provider,
                           ),
                           PortfolioPage(
-                            allFungibleTokens: widget.allFungibleTokens,
+                            allFungibleTokens: allFungibleTokens!,
                             provider: widget.provider,
                           ),
                         ],

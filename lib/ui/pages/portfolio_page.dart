@@ -647,9 +647,11 @@ class _PortfolioPageState extends State<PortfolioPage> {
                           shape: BoxShape.circle,
                           color: Colors.grey,
                         ),
-                        child: Text(
-                          token.name[0],
-                          style: const TextStyle(color: Colors.white),
+                        child: Center(
+                          child: Text(
+                            token.name[0],
+                            style: const TextStyle(color: Colors.white),
+                          ),
                         ),
                       ),
                       height: 35.0,
