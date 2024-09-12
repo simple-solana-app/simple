@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:simple/apis/token.dart';
 import 'package:simple/common.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:simple/ui/connect.dart';
@@ -73,16 +72,22 @@ class _SimpleAppState extends State<SimpleApp> {
         home: FutureBuilder(
           future: SolanaWalletProvider.initialize(),
           builder: ((context, snapshot) {
-            final SolanaWalletProvider provider =
-                SolanaWalletProvider.of(context);
+            if (snapshot.connectionState == ConnectionState.done) {
+              final SolanaWalletProvider provider =
+                  SolanaWalletProvider.of(context);
 
-            if (provider.adapter.isAuthorized) {
-              return NavScreen(
-                provider: provider,
-              );
+              if (provider.adapter.isAuthorized) {
+                return NavScreen(
+                  provider: provider,
+                );
+              } else {
+                return ConnectScreen(
+                  provider: provider,
+                );
+              }
             } else {
-              return ConnectScreen(
-                provider: provider,
+              return const Center(
+                child: CircularProgressIndicator(),
               );
             }
           }),

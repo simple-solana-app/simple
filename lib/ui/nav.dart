@@ -1,5 +1,6 @@
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter/material.dart';
+import 'package:simple/apis/rpc.dart';
 import 'package:simple/apis/token.dart';
 import 'package:simple/ui/elements/dropdown_token_search.dart';
 import 'package:simple/ui/pages/portfolio_page.dart';
@@ -21,11 +22,22 @@ class _NavScreenState extends State<NavScreen> {
 
   List<TokenModel>? allFungibleTokens;
 
+  String? userAddress;
+  String? userLabel;
+
+  double? userSolanaBalance;
+  double? userTotalStakedSolanaBalance;
+
   @override
   void initState() {
     super.initState();
 
     _getAllFungibleTokens();
+
+    userAddress =
+        Pubkey.fromBase64(widget.provider.connectedAccount!.address).toString();
+    userLabel = widget.provider.connectedAccount!.label!;
+    _getUserWalletInfo();
   }
 
   void _getAllFungibleTokens() async {
@@ -34,6 +46,29 @@ class _NavScreenState extends State<NavScreen> {
     setState(() {
       allFungibleTokens = tokens;
     });
+
+    print('${allFungibleTokens?.length} tokens');
+  }
+
+  void _getUserWalletInfo() async {
+    print(userAddress);
+    print(userLabel);
+
+    if (userAddress != null) {
+      final double sol = await fetchAccountSolanaBalance(userAddress!);
+
+      setState(() {
+        userSolanaBalance = sol;
+      });
+
+      print(userSolanaBalance);
+
+      final double stakedSol = await fetchAccountTotalStakedSol(userAddress!);
+
+      setState(() {
+        userTotalStakedSolanaBalance = stakedSol;
+      });
+    }
   }
 
   void _showInfoDialog(final BuildContext context) {
@@ -91,7 +126,10 @@ class _NavScreenState extends State<NavScreen> {
     double screenHeight = MediaQuery.of(context).size.height;
     double screenWidth = MediaQuery.of(context).size.width;
 
-    if (allFungibleTokens == null) {
+    if (allFungibleTokens == null ||
+        userAddress == null ||
+        userLabel == null ||
+        userSolanaBalance == null) {
       return const Center(
         child: CircularProgressIndicator(),
       );
@@ -118,6 +156,11 @@ class _NavScreenState extends State<NavScreen> {
                           ),
                           PortfolioPage(
                             allFungibleTokens: allFungibleTokens!,
+                            userAddress: userAddress!,
+                            userLabel: userLabel!,
+                            userSolanaBalance: userSolanaBalance!,
+                            userTotalStakedSolanaBalance:
+                                userTotalStakedSolanaBalance!,
                             provider: widget.provider,
                           ),
                         ],

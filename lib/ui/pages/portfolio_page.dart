@@ -17,26 +17,28 @@ class PortfolioPage extends StatefulWidget {
   const PortfolioPage({
     super.key,
     required this.allFungibleTokens,
+    required this.userAddress,
+    required this.userLabel,
+    required this.userSolanaBalance,
+    required this.userTotalStakedSolanaBalance,
     required this.provider,
   });
 
   final List<TokenModel> allFungibleTokens;
   final SolanaWalletProvider provider;
+  final String userAddress;
+  final String userLabel;
+  final double userSolanaBalance;
+  final double userTotalStakedSolanaBalance;
 
   @override
   State<PortfolioPage> createState() => _PortfolioPageState();
 }
 
 class _PortfolioPageState extends State<PortfolioPage> {
-  late String walletAddress;
-  late String walletLabel;
-
   late Timer _timer;
 
   bool _apiError = false;
-
-  double? _walletSolanaBalance;
-  double? _walletTotalStakedSolana;
 
   List<TokenModel> _allFungibleTokensInWallet = [];
   List<String> _allNftsInWallet = [];
@@ -67,16 +69,10 @@ class _PortfolioPageState extends State<PortfolioPage> {
   void initState() {
     super.initState();
 
-    walletAddress = widget.provider.connectedAccount!.address;
-    walletLabel = widget.provider.connectedAccount!.label!;
-
-    //_initializePortfolio();
+    _initializePortfolio();
   }
 
   void _initializePortfolio() {
-    _getWalletSolanaBalance();
-    _getWalletTotalStakedSolana();
-
     _getAllFungibleAndNonFungibleTokensInWallet();
 
     if (mounted) {
@@ -96,30 +92,9 @@ class _PortfolioPageState extends State<PortfolioPage> {
     }
   }
 
-  void _getWalletSolanaBalance() async {
-    double walletSolanaBalance = await fetchAccountSolanaBalance(walletAddress);
-
-    if (mounted) {
-      setState(() {
-        _walletSolanaBalance = walletSolanaBalance;
-      });
-    }
-  }
-
-  void _getWalletTotalStakedSolana() async {
-    double walletTotalStakedSolana =
-        await fetchAccountTotalStakedSol(walletAddress);
-
-    if (mounted) {
-      setState(() {
-        _walletTotalStakedSolana = walletTotalStakedSolana;
-      });
-    }
-  }
-
   void _getAllFungibleAndNonFungibleTokensInWallet() async {
     List<ProgramAccount.ProgramAccount> tokenAccounts =
-        await fetchTokenAccounts(walletAddress);
+        await fetchTokenAccounts(widget.userAddress);
     Map<String, dynamic> walletTokenAccountsWithMints = {};
 
     if (tokenAccounts.isNotEmpty) {
@@ -143,7 +118,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
     }
 
     List<ProgramAccount.ProgramAccount> token2022Accounts =
-        await fetchToken2022Accounts(walletAddress);
+        await fetchToken2022Accounts(widget.userAddress);
     Map<String, dynamic> walletToken2022AccountsWithMints = {};
 
     if (token2022Accounts.isNotEmpty) {
@@ -275,18 +250,16 @@ class _PortfolioPageState extends State<PortfolioPage> {
       // don't do if _walletTotalValue is not null bc the value difference needs to not print the first one
       _penultimateWalletTotalValue = _walletTotalValue ?? 0;
 
-      if (_walletSolanaBalance != null && _solanaPrice != null) {
-        _walletSolanaValue = _walletSolanaBalance! * _solanaPrice!;
+      if (_solanaPrice != null) {
+        _walletSolanaValue = widget.userSolanaBalance * _solanaPrice!;
       }
 
-      if (_walletTotalStakedSolana != null && _solanaPrice != null) {
+      if (_solanaPrice != null) {
         _walletTotalStakedSolanaValue =
-            _walletTotalStakedSolana! * _solanaPrice!;
+            widget.userTotalStakedSolanaBalance * _solanaPrice!;
       }
 
-      if (_walletSolanaValue != null &&
-          _walletTotalStakedSolana != null &&
-          otherTokensValue != null) {
+      if (_walletSolanaValue != null && otherTokensValue != null) {
         _walletTotalValue = _walletSolanaValue! +
             _walletTotalStakedSolanaValue! +
             otherTokensValue;
@@ -370,7 +343,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            walletLabel,
+            widget.userLabel,
             style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -380,10 +353,10 @@ class _PortfolioPageState extends State<PortfolioPage> {
           ),
           GestureDetector(
             onLongPress: () {
-              Clipboard.setData(ClipboardData(text: walletAddress));
+              Clipboard.setData(ClipboardData(text: widget.userAddress));
             },
             child: Text(
-              walletAddress,
+              widget.userAddress,
               style: const TextStyle(
                 fontSize: 12,
                 color: Colors.white,
@@ -437,7 +410,8 @@ class _PortfolioPageState extends State<PortfolioPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildSolanaCard(),
-            if (_walletTotalStakedSolana != 0) _buildStakedSolanaCard(),
+            if (widget.userTotalStakedSolanaBalance != 0)
+              _buildStakedSolanaCard(),
             Padding(
               padding:
                   const EdgeInsets.symmetric(vertical: 10.0, horizontal: 8.0),
@@ -524,7 +498,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
               ),
             ),
             subtitle: Text(
-              '${_vsToken.unicodeSymbol}${defaultNumberFormat.format(_solanaPrice)} - ${defaultNumberFormat.format(_walletSolanaBalance)}',
+              '${_vsToken.unicodeSymbol}${defaultNumberFormat.format(_solanaPrice)} - ${defaultNumberFormat.format(widget.userSolanaBalance)}',
               style: const TextStyle(color: Colors.white),
             ),
             trailing: Text(
@@ -571,7 +545,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
               ),
             ),
             subtitle: Text(
-              defaultNumberFormat.format(_walletTotalStakedSolana),
+              defaultNumberFormat.format(widget.userTotalStakedSolanaBalance),
               style: const TextStyle(color: Colors.white),
             ),
             trailing: Text(
