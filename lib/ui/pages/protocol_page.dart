@@ -28,6 +28,19 @@ class _ProtocolPageState extends State<ProtocolPage> {
 
     _checkClaimTracker();
     _getRecentBlockHash();
+
+    _findProgAccts();
+  }
+
+  void _findProgAccts() {
+    final ProgramAddress percentTrackerPdaInfo = Pubkey.findProgramAddress(
+      [
+         utf8.encode("percent_tracker"),
+      ],
+      programId,
+    );
+
+    print(percentTrackerPdaInfo.pubkey);
   }
 
   void _checkClaimTracker() async {
@@ -112,19 +125,46 @@ class _ProtocolPageState extends State<ProtocolPage> {
     }
   }
 
+  void _execute() async {
+    final account = widget.provider.connectedAccount!;
+    final payerPubkey = Pubkey.fromBase64(account.address);
+
+    final List<AccountMeta> keys = [
+      AccountMeta(payerPubkey, isSigner: true, isWritable: true),
+      AccountMeta(percentTrackerPda, isSigner: false, isWritable: true),
+    ];
+
+    final Uint8List disc = Uint8List.fromList([130, 221, 242, 154, 13, 193, 189, 29]);
+
+    final TransactionInstruction ix = TransactionInstruction(
+        programId: programId,
+        keys: keys,
+        data: disc,
+    );
+
+    final Message msg = Message.compile(version: 0, payer: payerPubkey, instructions: [ix], recentBlockhash: _recentBlockhash);
+
+    final Transaction tx = Transaction(message: msg);
+
+    final signature = await widget.provider.signAndSendTransactions(context, transactions: [tx]);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Protocol Page'),
       ),
-      body: Center(
-        child: _hasClaimTrackerAccount == false
-            ? ElevatedButton(
-                onPressed: _createAccount,
-                child: Text('Create your Claim Tracker Account'),
-              )
-            : Text('Claim Tracker Account already exists.'),
+      body: Column(
+        children: [
+          _hasClaimTrackerAccount == false
+              ? ElevatedButton(
+                  onPressed: _createAccount,
+                  child: Text('Create your Claim Tracker Account'),
+                )
+              : Text('Claim Tracker Account already exists.'),
+          ElevatedButton(onPressed: _execute, child: Text("Execute"),)
+        ],
       ),
     );
   }

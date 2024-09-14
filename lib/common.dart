@@ -14,6 +14,7 @@ final AppIdentity simpleIdentity = AppIdentity(
 
 final Pubkey programId =
     Pubkey.fromBase58('6yUtbQXotEAbzJBHLghordn9r3vZ8wRuCbFBxMaatVoF');
+final Pubkey percentTrackerPda = Pubkey.fromBase58('ASkwiutgrohdg1DEs6RYbjk5gcCH3dCEbSTMyCTRFxjw');
 
 const String mainnetBetaUri = 'https://api.mainnet-beta.solana.com';
 RpcClient mainnetClient = RpcClient(mainnetBetaUri);
