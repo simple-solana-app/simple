@@ -22,8 +22,10 @@ Future<double> fetchAccountTotalStakedSol(String accountPubkey) async {
   ];
 
   try {
-    final response = await mainnetClient.getProgramAccounts(stakeProgramId,
-        encoding: encoding, filters: filters);
+    final response = await mainnetClient.getProgramAccounts(
+        StakeProgram.programId,
+        encoding: encoding,
+        filters: filters);
 
     if (response.isEmpty) {
       return 0.0;
@@ -42,7 +44,7 @@ Future<double> fetchAccountTotalStakedSol(String accountPubkey) async {
 }
 
 Future<List<ProgramAccount>> fetchTokenAccounts(String accountPubkey) async {
-  const filter = TokenAccountsFilter.byProgramId(tokenProgramId);
+  const filter = TokenAccountsFilter.byProgramId(TokenProgram.programId);
 
   const encoding = Encoding.base64;
 
@@ -58,7 +60,7 @@ Future<List<ProgramAccount>> fetchTokenAccounts(String accountPubkey) async {
 
 Future<List<ProgramAccount>> fetchToken2022Accounts(
     String accountPubkey) async {
-  const filter = TokenAccountsFilter.byProgramId(token2022ProgramId);
+  const filter = TokenAccountsFilter.byProgramId(Token2022Program.programId);
 
   const encoding = Encoding.base64;
 

@@ -22,7 +22,7 @@ class _NavScreenState extends State<NavScreen> {
 
   List<TokenModel>? allFungibleTokens;
 
-  String? userAddress;
+  Pubkey? userPubkey;
   String? userLabel;
 
   double? userSolanaBalance;
@@ -34,8 +34,7 @@ class _NavScreenState extends State<NavScreen> {
 
     _getAllFungibleTokens();
 
-    userAddress =
-        Pubkey.fromBase64(widget.provider.connectedAccount!.address).toString();
+    userPubkey = Pubkey.fromBase64(widget.provider.connectedAccount!.address);
     userLabel = widget.provider.connectedAccount!.label!;
     _getUserWalletInfo();
   }
@@ -46,24 +45,18 @@ class _NavScreenState extends State<NavScreen> {
     setState(() {
       allFungibleTokens = tokens;
     });
-
-    print('${allFungibleTokens?.length} tokens');
   }
 
   void _getUserWalletInfo() async {
-    print(userAddress);
-    print(userLabel);
-
-    if (userAddress != null) {
-      final double sol = await fetchAccountSolanaBalance(userAddress!);
+    if (userPubkey != null) {
+      final double sol = await fetchAccountSolanaBalance(userPubkey.toString());
 
       setState(() {
         userSolanaBalance = sol;
       });
 
-      print(userSolanaBalance);
-
-      final double stakedSol = await fetchAccountTotalStakedSol(userAddress!);
+      final double stakedSol =
+          await fetchAccountTotalStakedSol(userPubkey.toString());
 
       setState(() {
         userTotalStakedSolanaBalance = stakedSol;
@@ -127,7 +120,7 @@ class _NavScreenState extends State<NavScreen> {
     double screenWidth = MediaQuery.of(context).size.width;
 
     if (allFungibleTokens == null ||
-        userAddress == null ||
+        userPubkey == null ||
         userLabel == null ||
         userSolanaBalance == null) {
       return const Center(
@@ -152,11 +145,12 @@ class _NavScreenState extends State<NavScreen> {
                             allFungibleTokens: allFungibleTokens!,
                           ),
                           ProtocolPage(
+                            userPubkey: userPubkey!,
                             provider: widget.provider,
                           ),
                           PortfolioPage(
                             allFungibleTokens: allFungibleTokens!,
-                            userAddress: userAddress!,
+                            userPubkey: userPubkey!,
                             userLabel: userLabel!,
                             userSolanaBalance: userSolanaBalance!,
                             userTotalStakedSolanaBalance:

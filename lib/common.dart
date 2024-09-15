@@ -12,16 +12,16 @@ final AppIdentity simpleIdentity = AppIdentity(
     icon: Uri.parse(simpleLogoUri),
     name: 'simple');
 
-final Pubkey programId =
-    Pubkey.fromBase58('6yUtbQXotEAbzJBHLghordn9r3vZ8wRuCbFBxMaatVoF');
-final Pubkey percentTrackerPda = Pubkey.fromBase58('ASkwiutgrohdg1DEs6RYbjk5gcCH3dCEbSTMyCTRFxjw');
+//TODO placeholders
+final Pubkey PHmySimpleAccount =
+    Pubkey.fromBase58('5LEXeqv44X21oCBybV74ZTQCVKLtX1iL5474gSUjWwrx');
+final Pubkey PHmyRaydiumLPAta =
+    Pubkey.fromBase58('E6JtEhz3DDEZvv91YLanMxwQnMe3ov8Hu4892ba3wdAm');
+final Pubkey PHmyUserClaimTracker =
+    Pubkey.fromBase58('2gn5Pdh3jiL3S7XTphHv7mra2uGWYCavaACFqPK4AAvv');
 
 const String mainnetBetaUri = 'https://api.mainnet-beta.solana.com';
 RpcClient mainnetClient = RpcClient(mainnetBetaUri);
-
-const String tokenProgramId = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
-const String token2022ProgramId = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb';
-const String stakeProgramId = 'Stake11111111111111111111111111111111111111';
 
 const String jupAllTokensUri = 'https://token.jup.ag/all';
 const String jupPricesBaseUri = 'https://price.jup.ag/v4/price?ids=';

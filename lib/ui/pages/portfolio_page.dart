@@ -17,7 +17,7 @@ class PortfolioPage extends StatefulWidget {
   const PortfolioPage({
     super.key,
     required this.allFungibleTokens,
-    required this.userAddress,
+    required this.userPubkey,
     required this.userLabel,
     required this.userSolanaBalance,
     required this.userTotalStakedSolanaBalance,
@@ -26,7 +26,7 @@ class PortfolioPage extends StatefulWidget {
 
   final List<TokenModel> allFungibleTokens;
   final SolanaWalletProvider provider;
-  final String userAddress;
+  final Pubkey userPubkey;
   final String userLabel;
   final double userSolanaBalance;
   final double userTotalStakedSolanaBalance;
@@ -94,7 +94,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
 
   void _getAllFungibleAndNonFungibleTokensInWallet() async {
     List<ProgramAccount.ProgramAccount> tokenAccounts =
-        await fetchTokenAccounts(widget.userAddress);
+        await fetchTokenAccounts(widget.userPubkey.toString());
     Map<String, dynamic> walletTokenAccountsWithMints = {};
 
     if (tokenAccounts.isNotEmpty) {
@@ -118,7 +118,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
     }
 
     List<ProgramAccount.ProgramAccount> token2022Accounts =
-        await fetchToken2022Accounts(widget.userAddress);
+        await fetchToken2022Accounts(widget.userPubkey.toString());
     Map<String, dynamic> walletToken2022AccountsWithMints = {};
 
     if (token2022Accounts.isNotEmpty) {
@@ -353,10 +353,11 @@ class _PortfolioPageState extends State<PortfolioPage> {
           ),
           GestureDetector(
             onLongPress: () {
-              Clipboard.setData(ClipboardData(text: widget.userAddress));
+              Clipboard.setData(
+                  ClipboardData(text: widget.userPubkey.toString()));
             },
             child: Text(
-              widget.userAddress,
+              widget.userPubkey.toString(),
               style: const TextStyle(
                 fontSize: 12,
                 color: Colors.white,

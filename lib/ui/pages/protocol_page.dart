@@ -1,13 +1,33 @@
-import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:simple/common.dart';
 import 'package:solana_wallet_provider/solana_wallet_provider.dart';
 
-class ProtocolPage extends StatefulWidget {
-  const ProtocolPage({super.key, required this.provider});
+final Pubkey programId =
+    Pubkey.fromBase58('6yUtbQXotEAbzJBHLghordn9r3vZ8wRuCbFBxMaatVoF');
+final Pubkey percentTrackerPda =
+    Pubkey.fromBase58('ASkwiutgrohdg1DEs6RYbjk5gcCH3dCEbSTMyCTRFxjw');
+final Pubkey wsolBalancePda =
+    Pubkey.fromBase58('HqAvkCgG7dUtPAbSaQQWB1zwoKCUxiZPzThoKybR94hn');
+final Pubkey transferAuthorityPda =
+    Pubkey.fromBase58('AbjgWPYQi5Qg4gKu6aRDp3yZCkBTQS1Rst4x9bZ6eHuc');
+final Pubkey programSimpleTokenAccount =
+    Pubkey.fromBase58('G1WbUJDHZZXXYxXsdnJPsgM3noyXCbD9Dt57Lq79f5hH');
+final Pubkey raydiumPoolWsolTokenAccount =
+    Pubkey.fromBase58('364AQ7xZsUn3R9qkYSDVks1W6pfiXzZosJjZ6o7gv9by');
+final Pubkey creatorSimpleTokenAccount =
+    Pubkey.fromBase58('5LEXeqv44X21oCBybV74ZTQCVKLtX1iL5474gSUjWwrx');
+final Pubkey simpleTokenMint =
+    Pubkey.fromBase58('4QUwG4eADsjfaZ5nTEd6eGF5he8vR8FCFLPgwmpiJRD5');
+final Pubkey raydiumLpMint =
+    Pubkey.fromString('52Pbw9eUXkuMsw1KJKdYtkBEPt94D8RL8Ko29Hrqsb2X');
 
+class ProtocolPage extends StatefulWidget {
+  const ProtocolPage(
+      {super.key, required this.provider, required this.userPubkey});
+
+  final Pubkey userPubkey;
   final SolanaWalletProvider provider;
 
   @override
@@ -18,68 +38,30 @@ class _ProtocolPageState extends State<ProtocolPage> {
   bool _hasClaimTrackerAccount = false;
   bool _hasSimpleTokenAccount = false;
 
-  late String _recentBlockhash;
+  Pubkey? _userClaimTrackerPubkey;
 
-  late Pubkey _userClaimTrackerPubkey;
+  @override
+  void dispose() {
+    super.dispose();
+  }
 
   @override
   void initState() {
     super.initState();
 
     _checkClaimTracker();
-    _getRecentBlockHash();
-
-    _findProgAccts();
-  }
-
-  void _findProgAccts() {
-    final ProgramAddress percentTrackerPdaInfo = Pubkey.findProgramAddress(
-      [
-         utf8.encode("percent_tracker"),
-      ],
-      programId,
-    );
-
-    print(percentTrackerPdaInfo.pubkey);
   }
 
   void _checkClaimTracker() async {
-    final account = widget.provider.connectedAccount!;
-    final payerPubkey = Pubkey.fromBase64(account.address);
-
-    // Find the Program Address (PDA) using the seed
     final ProgramAddress userClaimTrackerPdaInfo = Pubkey.findProgramAddress(
       [
-        payerPubkey.toBytes(),
+        widget.userPubkey.toBytes(),
       ],
       programId,
-    );
-
-    AccountInfo? userClaimTrackerAccount =
-        await widget.provider.connection.getAccountInfo(
-      userClaimTrackerPdaInfo.pubkey,
     );
 
     setState(() {
       _userClaimTrackerPubkey = userClaimTrackerPdaInfo.pubkey;
-    });
-
-    print(userClaimTrackerAccount);
-
-    if (userClaimTrackerAccount != null) {
-      setState(() {
-        _hasClaimTrackerAccount = true;
-      });
-    }
-  }
-
-  void _getRecentBlockHash() async {
-    final BlockhashWithExpiryBlockHeight recentBlockhashResponse =
-        await widget.provider.connection.getLatestBlockhash();
-    final String recentBlockhash = recentBlockhashResponse.blockhash;
-
-    setState(() {
-      _recentBlockhash = recentBlockhash;
     });
   }
 
@@ -87,13 +69,13 @@ class _ProtocolPageState extends State<ProtocolPage> {
 
   void _createAccount() async {
     try {
-      final account = widget.provider.connectedAccount!;
-      final payerPubkey = Pubkey.fromBase64(account.address);
-      print('Payer Pubkey: ${payerPubkey}');
+      final BlockhashWithExpiryBlockHeight recentBlockhashResponse =
+          await widget.provider.connection.getLatestBlockhash();
+      final String recentBlockhash = recentBlockhashResponse.blockhash;
 
       final List<AccountMeta> keys = [
-        AccountMeta(payerPubkey, isSigner: true, isWritable: true),
-        AccountMeta(_userClaimTrackerPubkey, isSigner: false, isWritable: true),
+        AccountMeta(widget.userPubkey, isSigner: true, isWritable: true),
+        AccountMeta(PHmyUserClaimTracker, isSigner: false, isWritable: true),
         AccountMeta(SystemProgram.programId,
             isSigner: false, isWritable: false),
       ];
@@ -109,61 +91,89 @@ class _ProtocolPageState extends State<ProtocolPage> {
 
       final Message msg = Message.compile(
         version: 0,
-        payer: payerPubkey,
-        recentBlockhash: _recentBlockhash,
+        payer: widget.userPubkey,
+        recentBlockhash: recentBlockhash,
         instructions: [ix],
       );
 
       final Transaction tx = Transaction(message: msg);
 
-      // Sign and send the transaction and capture the signature
-      final signature = await widget.provider
-          .signAndSendTransactions(context, transactions: [tx]);
-      print('Transaction signature: ${signature.signatures}');
+      if (mounted) {
+        widget.provider.signAndSendTransactions(context, transactions: [tx]);
+      }
     } catch (e) {
-      print('Failed to create account: $e');
+      print('Error: $e');
     }
   }
 
   void _execute() async {
-    final account = widget.provider.connectedAccount!;
-    final payerPubkey = Pubkey.fromBase64(account.address);
+    try {
+      final BlockhashWithExpiryBlockHeight recentBlockhashResponse =
+          await widget.provider.connection.getLatestBlockhash();
+      final String recentBlockhash = recentBlockhashResponse.blockhash;
 
-    final List<AccountMeta> keys = [
-      AccountMeta(payerPubkey, isSigner: true, isWritable: true),
-      AccountMeta(percentTrackerPda, isSigner: false, isWritable: true),
-    ];
+      final List<AccountMeta> keys = [
+        AccountMeta(widget.userPubkey, isSigner: true, isWritable: true),
+        AccountMeta(percentTrackerPda, isSigner: false, isWritable: true),
+        AccountMeta(wsolBalancePda, isSigner: false, isWritable: true),
+        AccountMeta(transferAuthorityPda, isSigner: false, isWritable: false),
+        AccountMeta(programSimpleTokenAccount,
+            isSigner: false, isWritable: true),
+        AccountMeta(PHmyUserClaimTracker, isSigner: false, isWritable: true),
+        AccountMeta(PHmySimpleAccount, isSigner: false, isWritable: true),
+        AccountMeta(PHmyRaydiumLPAta, isSigner: false, isWritable: false),
+        AccountMeta(raydiumPoolWsolTokenAccount,
+            isSigner: false, isWritable: false),
+        AccountMeta(creatorSimpleTokenAccount,
+            isSigner: false, isWritable: true),
+        AccountMeta(simpleTokenMint, isSigner: false, isWritable: false),
+        AccountMeta(raydiumLpMint, isSigner: false, isWritable: false),
+        AccountMeta(TokenProgram.programId, isSigner: false, isWritable: false),
+      ];
 
-    final Uint8List disc = Uint8List.fromList([130, 221, 242, 154, 13, 193, 189, 29]);
+      final Uint8List disc =
+          Uint8List.fromList([130, 221, 242, 154, 13, 193, 189, 29]);
 
-    final TransactionInstruction ix = TransactionInstruction(
+      final TransactionInstruction ix = TransactionInstruction(
         programId: programId,
         keys: keys,
         data: disc,
-    );
+      );
 
-    final Message msg = Message.compile(version: 0, payer: payerPubkey, instructions: [ix], recentBlockhash: _recentBlockhash);
+      final Message msg = Message.compile(
+          version: 0,
+          payer: widget.userPubkey,
+          instructions: [ix],
+          recentBlockhash: recentBlockhash);
 
-    final Transaction tx = Transaction(message: msg);
+      final Transaction tx = Transaction(message: msg);
 
-    final signature = await widget.provider.signAndSendTransactions(context, transactions: [tx]);
+      if (mounted) {
+        widget.provider.signAndSendTransactions(context, transactions: [tx]);
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Protocol Page'),
-      ),
       body: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          _hasClaimTrackerAccount == false
-              ? ElevatedButton(
-                  onPressed: _createAccount,
-                  child: Text('Create your Claim Tracker Account'),
-                )
-              : Text('Claim Tracker Account already exists.'),
-          ElevatedButton(onPressed: _execute, child: Text("Execute"),)
+          ElevatedButton(
+            onPressed: _createAccount,
+            child: Text('Create your Claim Tracker Account'),
+          ),
+          ElevatedButton(
+            onPressed: _createAccount,
+            child: Text('Create your Simple Token Account'),
+          ),
+          ElevatedButton(
+            onPressed: _execute,
+            child: Text("Execute"),
+          )
         ],
       ),
     );
