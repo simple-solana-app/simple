@@ -54,11 +54,9 @@ class _TokensPageState extends State<TokensPage> {
       ninetyNineTokenAddressConcatenated,
       vsToken.mint,
     ).then((tokenMintsWithPrices) {
-      if (mounted) {
-        setState(() {
-          _filterOutNullPricedTokens(tokenMintsWithPrices);
-        });
-      }
+      setState(() {
+        _filterOutNullPricedTokens(tokenMintsWithPrices);
+      });
     });
   }
 
@@ -225,7 +223,7 @@ class _TokensPageState extends State<TokensPage> {
                         return const Padding(
                           padding: EdgeInsets.all(8.0),
                           child: Text(
-                            "I can't get the price of every token at once, you can search for any token though.",
+                            "I can't get the price of every token at once, you can search for any token though and see the price that way.",
                             style: TextStyle(color: Colors.white),
                           ),
                         );
@@ -246,35 +244,23 @@ class _TokensPageState extends State<TokensPage> {
             children: vsTokens.values.map((t) {
               return TextButton(
                 onPressed: () {
-                  if (mounted) {
-                    _getPrices(t.token).then((_) {
-                      setState(() {
-                        vsToken = t.token;
-                      });
+                  _getPrices(t.token).then((_) {
+                    setState(() {
+                      vsToken = t.token;
                     });
-                  }
+                  });
                 },
-                style: ButtonStyle(
-                  overlayColor: WidgetStateProperty.resolveWith<Color?>(
-                    (Set<WidgetState> states) {
-                      if (states.contains(WidgetState.pressed)) {
-                        return Colors.grey.withOpacity(0.1);
-                      }
-                      return null;
-                    },
-                  ),
-                ),
                 child: Text(
                   t.token.unicodeSymbol!,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
-                    color: Colors.grey,
+                    color: vsToken == t.token ? Colors.white : Colors.grey,
                   ),
                 ),
               );
             }).toList(),
           ),
-        )
+        ),
       ],
     );
   }

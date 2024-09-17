@@ -122,7 +122,8 @@ class _NavScreenState extends State<NavScreen> {
     if (allFungibleTokens == null ||
         userPubkey == null ||
         userLabel == null ||
-        userSolanaBalance == null) {
+        userSolanaBalance == null ||
+        userTotalStakedSolanaBalance == null) {
       return const Center(
         child: CircularProgressIndicator(),
       );
@@ -164,21 +165,57 @@ class _NavScreenState extends State<NavScreen> {
                   ],
                 ),
                 Positioned(
-                  bottom: screenHeight * 0.08,
-                  left: screenWidth * 0.252,
-                  child: GestureDetector(
-                    onTap: () => _showInfoDialog(context),
-                    child: const Icon(Icons.info_outline,
-                        color: Colors.white, size: 20),
+                  bottom: screenHeight * 0.07,
+                  left: screenWidth * 0.43,
+                  child: TextButton(
+                    onPressed: () => setState(() {
+                      _navIndex = 0;
+                    }),
+                    style: ButtonStyle(
+                      foregroundColor: _navIndex == 0
+                          ? WidgetStateProperty.all<Color>(Colors.white)
+                          : WidgetStateProperty.all<Color>(Colors.grey),
+                    ),
+                    child: const Text(
+                      "Tokens",
+                      style: TextStyle(fontSize: 18),
+                    ),
                   ),
                 ),
                 Positioned(
-                  bottom: screenHeight * 0.018,
-                  left: screenWidth * 0.233,
-                  child: GestureDetector(
-                    onTap: () => _showTokenSearchDialog(context),
-                    child:
-                        const Icon(Icons.search, color: Colors.white, size: 37),
+                  bottom: screenHeight * 0.040,
+                  left: screenWidth * 0.45,
+                  child: TextButton(
+                    onPressed: () => setState(() {
+                      _navIndex = 1;
+                    }),
+                    style: ButtonStyle(
+                      foregroundColor: _navIndex == 1
+                          ? WidgetStateProperty.all<Color>(Colors.white)
+                          : WidgetStateProperty.all<Color>(Colors.grey),
+                    ),
+                    child: const Text(
+                      "Protocol",
+                      style: TextStyle(fontSize: 18),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: screenHeight * 0.01,
+                  left: screenWidth * 0.440,
+                  child: TextButton(
+                    onPressed: () => setState(() {
+                      _navIndex = 2;
+                    }),
+                    style: ButtonStyle(
+                      foregroundColor: _navIndex == 2
+                          ? WidgetStateProperty.all<Color>(Colors.white)
+                          : WidgetStateProperty.all<Color>(Colors.grey),
+                    ),
+                    child: const Text(
+                      "Portfolio",
+                      style: TextStyle(fontSize: 18),
+                    ),
                   ),
                 ),
                 Positioned(
@@ -197,36 +234,21 @@ class _NavScreenState extends State<NavScreen> {
                   ),
                 ),
                 Positioned(
-                  bottom: screenHeight * 0.068,
-                  left: screenWidth * 0.425,
-                  child: TextButton(
-                    onPressed: () => setState(() {
-                      _navIndex = 0;
-                    }),
-                    child: const Text("Tokens",
-                        style: TextStyle(fontSize: 18, color: Colors.white)),
+                  bottom: screenHeight * 0.08,
+                  left: screenWidth * 0.24,
+                  child: GestureDetector(
+                    onTap: () => _showInfoDialog(context),
+                    child: const Icon(Icons.info_outline,
+                        color: Colors.grey, size: 20),
                   ),
                 ),
                 Positioned(
-                  bottom: screenHeight * 0.028,
-                  left: screenWidth * 0.447,
-                  child: TextButton(
-                    onPressed: () => setState(() {
-                      _navIndex = 1;
-                    }),
-                    child: const Text("Protocol",
-                        style: TextStyle(fontSize: 18, color: Colors.white)),
-                  ),
-                ),
-                Positioned(
-                  bottom: screenHeight * 0.0053,
-                  left: screenWidth * 0.440,
-                  child: TextButton(
-                    onPressed: () => setState(() {
-                      _navIndex = 2;
-                    }),
-                    child: const Text("Portfolio",
-                        style: TextStyle(fontSize: 18, color: Colors.white)),
+                  bottom: screenHeight * 0.018,
+                  left: screenWidth * 0.22,
+                  child: GestureDetector(
+                    onTap: () => _showTokenSearchDialog(context),
+                    child:
+                        const Icon(Icons.search, color: Colors.grey, size: 37),
                   ),
                 ),
                 Positioned(
@@ -237,15 +259,13 @@ class _NavScreenState extends State<NavScreen> {
                     style: ButtonStyle(
                       backgroundColor:
                           WidgetStateProperty.all<Color>(Colors.transparent),
-                      foregroundColor:
-                          WidgetStateProperty.all<Color>(Colors.white),
                       side: WidgetStateProperty.all<BorderSide>(
                         const BorderSide(color: Colors.white, width: 1.0),
                       ),
                     ),
                     child: const Text(
                       'Disconnect',
-                      style: TextStyle(fontSize: 16),
+                      style: TextStyle(fontSize: 16, color: Colors.white),
                     ),
                   ),
                 ),
