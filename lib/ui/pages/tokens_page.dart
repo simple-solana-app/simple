@@ -26,8 +26,7 @@ class _TokensPageState extends State<TokensPage> {
 
   TokenModel vsToken = vsTokens.USDC.token;
 
-  Map<String, double>? _tokenMintsWithNotNullPrices;
-  List<TokenModel>? _allNonNullPricedTokens;
+  Map<String, double>? _tokenMintsWithPrices;
 
   @override
   void dispose() {
@@ -55,38 +54,16 @@ class _TokensPageState extends State<TokensPage> {
       vsToken.mint,
     ).then((tokenMintsWithPrices) {
       setState(() {
-        _filterOutNullPricedTokens(tokenMintsWithPrices);
-      });
-    });
-  }
-
-  void _filterOutNullPricedTokens(
-      Map<String, double> tokenMintsWithPrices) async {
-    List<TokenModel> tokens = widget.allFungibleTokens
-        .where((token) => tokenMintsWithPrices[token.mint] != null)
-        .toList();
-
-    final String nonNullPricedTokenAddressConcatenated =
-        tokens.map((token) => token.mint).join(',');
-
-    await fetchPrices(
-      nonNullPricedTokenAddressConcatenated,
-      vsToken.mint,
-    ).then((prices) {
-      setState(() {
-        _allNonNullPricedTokens = tokens;
-        _tokenMintsWithNotNullPrices = prices;
+        _tokenMintsWithPrices = tokenMintsWithPrices;
       });
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_tokenMintsWithNotNullPrices == null ||
-        _allNonNullPricedTokens == null) {
+    if (_tokenMintsWithPrices == null) {
       return const SizedBox.shrink();
     }
-
     return Column(
       children: [
         Expanded(
@@ -94,11 +71,11 @@ class _TokensPageState extends State<TokensPage> {
             children: [
               Expanded(
                 child: ListView.builder(
-                  itemCount: _allNonNullPricedTokens!.length + 1,
+                  itemCount: 100,
                   itemBuilder: (context, index) {
-                    if (index < _allNonNullPricedTokens!.length) {
-                      TokenModel token = _allNonNullPricedTokens![index];
-                      double price = _tokenMintsWithNotNullPrices![token.mint]!;
+                    if (index < widget.allFungibleTokens.length) {
+                      TokenModel token = widget.allFungibleTokens[index];
+                      double? price = _tokenMintsWithPrices![token.mint];
 
                       return GestureDetector(
                         onTap: () {
@@ -197,7 +174,9 @@ class _TokensPageState extends State<TokensPage> {
                                     const SizedBox(height: 5),
                                     //TODO make not overflow
                                     Text(
-                                      '${vsToken.unicodeSymbol}${solanaNumberFormat.format(price)}/${token.symbol}',
+                                      price != null
+                                          ? '${vsToken.unicodeSymbol}${solanaNumberFormat.format(price)}/${token.symbol}'
+                                          : 'null',
                                       style: const TextStyle(
                                         color: Colors.grey,
                                         fontSize: 14.0,
@@ -238,28 +217,26 @@ class _TokensPageState extends State<TokensPage> {
             ],
           ),
         ),
-        Center(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: vsTokens.values.map((t) {
-              return TextButton(
-                onPressed: () {
-                  _getPrices(t.token).then((_) {
-                    setState(() {
-                      vsToken = t.token;
-                    });
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: vsTokens.values.map((t) {
+            return TextButton(
+              onPressed: () {
+                _getPrices(t.token).then((_) {
+                  setState(() {
+                    vsToken = t.token;
                   });
-                },
-                child: Text(
-                  t.token.unicodeSymbol!,
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: vsToken == t.token ? Colors.white : Colors.grey,
-                  ),
+                });
+              },
+              child: Text(
+                t.token.unicodeSymbol!,
+                style: TextStyle(
+                  fontSize: 18,
+                  color: vsToken == t.token ? Colors.white : Colors.grey,
                 ),
-              );
-            }).toList(),
-          ),
+              ),
+            );
+          }).toList(),
         ),
       ],
     );
