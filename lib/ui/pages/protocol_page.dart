@@ -18,8 +18,6 @@ final Pubkey raydiumPoolWsolTokenAccount =
     Pubkey.fromBase58('364AQ7xZsUn3R9qkYSDVks1W6pfiXzZosJjZ6o7gv9by');
 final Pubkey creatorSimpleTokenAccount =
     Pubkey.fromBase58('5LEXeqv44X21oCBybV74ZTQCVKLtX1iL5474gSUjWwrx');
-final Pubkey simpleTokenMint =
-    Pubkey.fromBase58('4QUwG4eADsjfaZ5nTEd6eGF5he8vR8FCFLPgwmpiJRD5');
 final Pubkey raydiumLpMint =
     Pubkey.fromString('52Pbw9eUXkuMsw1KJKdYtkBEPt94D8RL8Ko29Hrqsb2X');
 
@@ -126,7 +124,8 @@ class _ProtocolPageState extends State<ProtocolPage> {
             isSigner: false, isWritable: false),
         AccountMeta(creatorSimpleTokenAccount,
             isSigner: false, isWritable: true),
-        AccountMeta(simpleTokenMint, isSigner: false, isWritable: false),
+        AccountMeta(Pubkey.fromString(simpleTokenMint),
+            isSigner: false, isWritable: false),
         AccountMeta(raydiumLpMint, isSigner: false, isWritable: false),
         AccountMeta(TokenProgram.programId, isSigner: false, isWritable: false),
       ];

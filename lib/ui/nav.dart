@@ -1,12 +1,16 @@
+import 'dart:convert';
+
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter/material.dart';
 import 'package:simple/apis/rpc.dart';
 import 'package:simple/apis/token.dart';
+import 'package:simple/common.dart';
 import 'package:simple/ui/elements/dropdown_token_search.dart';
 import 'package:simple/ui/pages/portfolio_page.dart';
 import 'package:simple/ui/pages/protocol_page.dart';
 import 'package:simple/ui/pages/tokens_page.dart';
 import 'package:solana_wallet_provider/solana_wallet_provider.dart';
+import 'package:solana/src/rpc/dto/program_account.dart' as SolLib;
 
 class NavScreen extends StatefulWidget {
   const NavScreen({super.key, required this.provider});
@@ -27,6 +31,11 @@ class _NavScreenState extends State<NavScreen> {
 
   double? userSolanaBalance;
   double? userTotalStakedSolanaBalance;
+
+  Map<String, String> userAllWalletTokenAccountsWithMints = {};
+
+  Pubkey? userSimpleTokenAccount;
+  Map<String, double> userAllWalletTokenAccountsWithBalances = {};
 
   @override
   void initState() {
@@ -51,16 +60,75 @@ class _NavScreenState extends State<NavScreen> {
     if (userPubkey != null) {
       final double sol = await fetchAccountSolanaBalance(userPubkey.toString());
 
-      setState(() {
-        userSolanaBalance = sol;
-      });
+      userSolanaBalance = sol;
 
       final double stakedSol =
           await fetchAccountTotalStakedSol(userPubkey.toString());
 
-      setState(() {
-        userTotalStakedSolanaBalance = stakedSol;
-      });
+      userTotalStakedSolanaBalance = stakedSol;
+
+      List<SolLib.ProgramAccount> tokenAccounts =
+          await fetchTokenAccounts(userPubkey.toString());
+      Map<String, dynamic> walletTokenAccountsWithMints = {};
+
+      if (tokenAccounts.isNotEmpty) {
+        for (var tokenAccount in tokenAccounts) {
+          var tokenAccountPubkey = tokenAccount.pubkey;
+          var tokenAccountInfoRaw = tokenAccount.account.data?.toJson();
+
+          for (var act in tokenAccountInfoRaw) {
+            try {
+              var decodedData = base64.decode(act);
+              var tokenAccountInfo = parseTokenAccount(decodedData);
+
+              walletTokenAccountsWithMints[tokenAccountPubkey] =
+                  tokenAccountInfo.mint;
+            } catch (_) {
+              continue;
+            }
+          }
+        }
+      }
+
+      List<SolLib.ProgramAccount> token2022Accounts =
+          await fetchToken2022Accounts(userPubkey.toString());
+      Map<String, dynamic> walletToken2022AccountsWithMints = {};
+
+      if (token2022Accounts.isNotEmpty) {
+        for (var token2022Account in token2022Accounts) {
+          var token2022AccountPubkey = token2022Account.pubkey;
+          var token2022AccountInfoRaw = token2022Account.account.data?.toJson();
+
+          for (var act in token2022AccountInfoRaw) {
+            try {
+              var decodedData = base64.decode(act);
+              var token2022AccountInfo = parseTokenAccount(decodedData);
+
+              walletToken2022AccountsWithMints[token2022AccountPubkey] =
+                  token2022AccountInfo.mint;
+            } catch (_) {
+              continue;
+            }
+          }
+        }
+      }
+
+      userAllWalletTokenAccountsWithMints = {
+        ...walletTokenAccountsWithMints,
+        ...walletToken2022AccountsWithMints
+      };
+
+      for (var entry in userAllWalletTokenAccountsWithMints.entries) {
+        if (entry.value == simpleTokenMint) {
+          userSimpleTokenAccount = Pubkey.fromString(entry.key);
+          break;
+        }
+      }
+
+      for (var key in userAllWalletTokenAccountsWithMints.keys) {
+        var tokenAccountBalance = await fetchTokenAccountBalance(key);
+        userAllWalletTokenAccountsWithBalances[key] = tokenAccountBalance;
+      }
     }
   }
 
@@ -123,7 +191,9 @@ class _NavScreenState extends State<NavScreen> {
         userPubkey == null ||
         userLabel == null ||
         userSolanaBalance == null ||
-        userTotalStakedSolanaBalance == null) {
+        userTotalStakedSolanaBalance == null ||
+        userAllWalletTokenAccountsWithMints.isEmpty ||
+        userAllWalletTokenAccountsWithBalances.isEmpty) {
       return const Center(
         child: CircularProgressIndicator(),
       );
@@ -156,6 +226,10 @@ class _NavScreenState extends State<NavScreen> {
                             userSolanaBalance: userSolanaBalance!,
                             userTotalStakedSolanaBalance:
                                 userTotalStakedSolanaBalance!,
+                            userAllWalletTokenAccountsWithMints:
+                                userAllWalletTokenAccountsWithMints,
+                            userAllWalletTokenAccountsWithBalances:
+                                userAllWalletTokenAccountsWithBalances,
                             provider: widget.provider,
                           ),
                         ],

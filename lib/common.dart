@@ -12,6 +12,8 @@ final AppIdentity simpleIdentity = AppIdentity(
     icon: Uri.parse(simpleLogoUri),
     name: 'simple');
 
+const String simpleTokenMint = "4QUwG4eADsjfaZ5nTEd6eGF5he8vR8FCFLPgwmpiJRD5";
+
 //TODO placeholders
 final Pubkey PHmySimpleAccount =
     Pubkey.fromBase58('5LEXeqv44X21oCBybV74ZTQCVKLtX1iL5474gSUjWwrx');

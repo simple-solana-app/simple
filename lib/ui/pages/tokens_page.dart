@@ -22,7 +22,6 @@ class TokensPage extends StatefulWidget {
 
 class _TokensPageState extends State<TokensPage> {
   late Timer _timer;
-  bool columnRendered = false;
 
   TokenModel vsToken = vsTokens.USDC.token;
 
@@ -71,146 +70,123 @@ class _TokensPageState extends State<TokensPage> {
             children: [
               Expanded(
                 child: ListView.builder(
-                  itemCount: 100,
+                  itemCount: 99,
                   itemBuilder: (context, index) {
-                    if (index < widget.allFungibleTokens.length) {
-                      TokenModel token = widget.allFungibleTokens[index];
-                      double? price = _tokenMintsWithPrices![token.mint];
+                    TokenModel token = widget.allFungibleTokens[index];
+                    double? price = _tokenMintsWithPrices![token.mint];
 
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => TokenPairWithGraph(
-                                token: token,
-                                vsToken: vsToken,
-                                allFungibleTokens: widget.allFungibleTokens,
-                              ),
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => TokenPairWithGraph(
+                              token: token,
+                              vsToken: vsToken,
+                              allFungibleTokens: widget.allFungibleTokens,
                             ),
-                          );
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: SizedBox(
-                            height: 50,
-                            child: Row(
-                              children: [
-                                ClipOval(
-                                  child: token.logo.endsWith('.svg')
-                                      ? SvgPicture.network(
-                                          token.logo,
-                                          placeholderBuilder: (context) =>
-                                              Container(
-                                            width: 35.0,
-                                            height: 35.0,
-                                            decoration: const BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              color: Colors.grey,
-                                            ),
-                                            child: Center(
-                                              child: Text(
-                                                token.name[0],
-                                                style: const TextStyle(
-                                                    color: Colors.white),
-                                              ),
-                                            ),
-                                          ),
-                                          height: 35.0,
-                                          width: 35.0,
-                                        )
-                                      : CachedNetworkImage(
-                                          imageUrl: token.logo,
-                                          placeholder: (context, url) =>
-                                              Container(
-                                            width: 35.0,
-                                            height: 35.0,
-                                            decoration: const BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              color: Colors.grey,
-                                            ),
-                                            child: Center(
-                                              child: Text(
-                                                token.name[0],
-                                                style: const TextStyle(
-                                                    color: Colors.white),
-                                              ),
-                                            ),
-                                          ),
-                                          errorWidget: (context, url, error) =>
-                                              Container(
-                                            width: 35.0,
-                                            height: 35.0,
-                                            decoration: const BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              color: Colors.grey,
-                                            ),
-                                            child: Center(
-                                              child: Text(
-                                                token.name[0],
-                                                style: const TextStyle(
-                                                    color: Colors.white),
-                                              ),
-                                            ),
-                                          ),
-                                          height: 35.0,
-                                          width: 35.0,
-                                          fit: BoxFit.cover,
-                                        ),
-                                ),
-                                const SizedBox(width: 10),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      token.name,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 16.0,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 5),
-                                    //TODO make not overflow
-                                    Text(
-                                      price != null
-                                          ? '${vsToken.unicodeSymbol}${solanaNumberFormat.format(price)}/${token.symbol}'
-                                          : 'null',
-                                      style: const TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 14.0,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    } else {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (!columnRendered) {
-                          setState(() {
-                            columnRendered = true;
-                          });
-                        }
-                      });
-
-                      if (columnRendered) {
-                        return const Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Text(
-                            "I can't get the price of every token at once, you can search for any token though and see the price that way.",
-                            style: TextStyle(color: Colors.white),
                           ),
                         );
-                      } else {
-                        // column renders p quick
-                        return const SizedBox.shrink();
-                      }
-                    }
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: SizedBox(
+                          height: 50,
+                          child: Row(
+                            children: [
+                              ClipOval(
+                                child: token.logo.endsWith('.svg')
+                                    ? SvgPicture.network(
+                                        token.logo,
+                                        placeholderBuilder: (context) =>
+                                            Container(
+                                          width: 35.0,
+                                          height: 35.0,
+                                          decoration: const BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Colors.grey,
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              token.name[0],
+                                              style: const TextStyle(
+                                                  color: Colors.white),
+                                            ),
+                                          ),
+                                        ),
+                                        height: 35.0,
+                                        width: 35.0,
+                                      )
+                                    : CachedNetworkImage(
+                                        imageUrl: token.logo,
+                                        placeholder: (context, url) =>
+                                            Container(
+                                          width: 35.0,
+                                          height: 35.0,
+                                          decoration: const BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Colors.grey,
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              token.name[0],
+                                              style: const TextStyle(
+                                                  color: Colors.white),
+                                            ),
+                                          ),
+                                        ),
+                                        errorWidget: (context, url, error) =>
+                                            Container(
+                                          width: 35.0,
+                                          height: 35.0,
+                                          decoration: const BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Colors.grey,
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              token.name[0],
+                                              style: const TextStyle(
+                                                  color: Colors.white),
+                                            ),
+                                          ),
+                                        ),
+                                        height: 35.0,
+                                        width: 35.0,
+                                        fit: BoxFit.cover,
+                                      ),
+                              ),
+                              const SizedBox(width: 10),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    token.name,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16.0,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  //TODO make not overflow
+                                  Text(
+                                    price != null
+                                        ? '${vsToken.unicodeSymbol}${solanaNumberFormat.format(price)}/${token.symbol}'
+                                        : 'null',
+                                    style: const TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 14.0,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
                   },
                 ),
               ),
