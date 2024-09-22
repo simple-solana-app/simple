@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:simple/common.dart';
+import 'package:solana/dto.dart' as sol_lib;
 import 'package:solana_wallet_provider/solana_wallet_provider.dart';
 
 final Pubkey programId =
@@ -23,20 +24,24 @@ final Pubkey raydiumLpMint =
 
 class ProtocolPage extends StatefulWidget {
   const ProtocolPage(
-      {super.key, required this.provider, required this.userPubkey});
+      {super.key,
+      required this.provider,
+      required this.userPubkey,
+      required this.userAllWalletTokenAccountsWithMints});
 
   final Pubkey userPubkey;
   final SolanaWalletProvider provider;
+  final Map<String, String> userAllWalletTokenAccountsWithMints;
 
   @override
   State<ProtocolPage> createState() => _ProtocolPageState();
 }
 
 class _ProtocolPageState extends State<ProtocolPage> {
-  bool _hasClaimTrackerAccount = false;
-  bool _hasSimpleTokenAccount = false;
-
   Pubkey? _userClaimTrackerPubkey;
+  Pubkey? _userSimpleTokenAccountPubkey;
+  Pubkey? _userRaydiumLpAta;
+  int? _userClaimTrackerLamps;
 
   @override
   void dispose() {
@@ -48,6 +53,7 @@ class _ProtocolPageState extends State<ProtocolPage> {
     super.initState();
 
     _checkClaimTracker();
+    _checkTokenAccounts();
   }
 
   void _checkClaimTracker() async {
@@ -58,14 +64,41 @@ class _ProtocolPageState extends State<ProtocolPage> {
       programId,
     );
 
+    final account = await mainnetClient
+        .getAccountInfo(userClaimTrackerPdaInfo.pubkey.toString())
+        .value;
+
+    final lamports = account?.lamports;
+
     setState(() {
       _userClaimTrackerPubkey = userClaimTrackerPdaInfo.pubkey;
+      _userClaimTrackerLamps = lamports;
     });
+
+    print("claim tracker: $lamports, $_userClaimTrackerPubkey");
   }
 
-  void _checkSimpleTokenAccount() async {}
+  //TODO this needs to check lamps of ATA of Raydium LP
+  void _checkTokenAccounts() async {
+    for (var entry in widget.userAllWalletTokenAccountsWithMints.entries) {
+      if (entry.value == simpleTokenMint) {
+        setState(() {
+          _userSimpleTokenAccountPubkey = Pubkey.fromString(entry.key);
+        });
+      }
+      if (entry.value == raydiumLpMint.toString()) {
+        setState(() {
+          _userRaydiumLpAta = Pubkey.fromString(entry.key);
+        });
+      }
+      print(_userSimpleTokenAccountPubkey);
+      print(_userRaydiumLpAta);
 
-  void _createAccount() async {
+      break;
+    }
+  }
+
+  void _createClaimTrackerAccount() async {
     try {
       final BlockhashWithExpiryBlockHeight recentBlockhashResponse =
           await widget.provider.connection.getLatestBlockhash();
@@ -73,7 +106,8 @@ class _ProtocolPageState extends State<ProtocolPage> {
 
       final List<AccountMeta> keys = [
         AccountMeta(widget.userPubkey, isSigner: true, isWritable: true),
-        AccountMeta(PHmyUserClaimTracker, isSigner: false, isWritable: true),
+        AccountMeta(_userClaimTrackerPubkey!,
+            isSigner: false, isWritable: true),
         AccountMeta(SystemProgram.programId,
             isSigner: false, isWritable: false),
       ];
@@ -96,6 +130,7 @@ class _ProtocolPageState extends State<ProtocolPage> {
 
       final Transaction tx = Transaction(message: msg);
 
+//need if mounted so context isn't udnerlined squigly blue
       if (mounted) {
         widget.provider.signAndSendTransactions(context, transactions: [tx]);
       }
@@ -103,6 +138,8 @@ class _ProtocolPageState extends State<ProtocolPage> {
       print('Error: $e');
     }
   }
+
+  void _createSimpleAta() async {}
 
   void _execute() async {
     try {
@@ -117,9 +154,11 @@ class _ProtocolPageState extends State<ProtocolPage> {
         AccountMeta(transferAuthorityPda, isSigner: false, isWritable: false),
         AccountMeta(programSimpleTokenAccount,
             isSigner: false, isWritable: true),
-        AccountMeta(PHmyUserClaimTracker, isSigner: false, isWritable: true),
-        AccountMeta(PHmySimpleAccount, isSigner: false, isWritable: true),
-        AccountMeta(PHmyRaydiumLPAta, isSigner: false, isWritable: false),
+        AccountMeta(_userClaimTrackerPubkey!,
+            isSigner: false, isWritable: true),
+        AccountMeta(_userSimpleTokenAccountPubkey!,
+            isSigner: false, isWritable: true),
+        AccountMeta(_userRaydiumLpAta!, isSigner: false, isWritable: false),
         AccountMeta(raydiumPoolWsolTokenAccount,
             isSigner: false, isWritable: false),
         AccountMeta(creatorSimpleTokenAccount,
@@ -161,18 +200,33 @@ class _ProtocolPageState extends State<ProtocolPage> {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          ElevatedButton(
-            onPressed: _createAccount,
-            child: Text('Create your Claim Tracker Account'),
-          ),
-          ElevatedButton(
-            onPressed: _createAccount,
-            child: Text('Create your Simple Token Account'),
-          ),
-          ElevatedButton(
-            onPressed: _execute,
-            child: Text("Execute"),
-          )
+          if (_userRaydiumLpAta != null) ...[
+            if (_userClaimTrackerLamps == null)
+              ElevatedButton(
+                onPressed: _createClaimTrackerAccount,
+                child: const Text('Create your Claim Tracker Account'),
+              ),
+            if (_userSimpleTokenAccountPubkey == null)
+              ElevatedButton(
+                onPressed: _createSimpleAta,
+                child: const Text('Create your Simple Token Account'),
+              ),
+            if (_userClaimTrackerLamps != null &&
+                _userSimpleTokenAccountPubkey != null)
+              ElevatedButton(
+                onPressed: _execute,
+                child: const Text("Execute"),
+              ),
+          ] else ...[
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Text(
+                "Please supply liquidity to the pool before interacting with the protocol",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
+          ],
         ],
       ),
     );

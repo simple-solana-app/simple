@@ -4,13 +4,12 @@ import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter/material.dart';
 import 'package:simple/apis/rpc.dart';
 import 'package:simple/apis/token.dart';
-import 'package:simple/common.dart';
 import 'package:simple/ui/elements/dropdown_token_search.dart';
 import 'package:simple/ui/pages/portfolio_page.dart';
 import 'package:simple/ui/pages/protocol_page.dart';
 import 'package:simple/ui/pages/tokens_page.dart';
 import 'package:solana_wallet_provider/solana_wallet_provider.dart';
-import 'package:solana/src/rpc/dto/program_account.dart' as SolLib;
+import 'package:solana/src/rpc/dto/program_account.dart' as sol_lib;
 
 class NavScreen extends StatefulWidget {
   const NavScreen({super.key, required this.provider});
@@ -34,7 +33,6 @@ class _NavScreenState extends State<NavScreen> {
 
   Map<String, String> userAllWalletTokenAccountsWithMints = {};
 
-  Pubkey? userSimpleTokenAccount;
   Map<String, double> userAllWalletTokenAccountsWithBalances = {};
 
   @override
@@ -67,7 +65,7 @@ class _NavScreenState extends State<NavScreen> {
 
       userTotalStakedSolanaBalance = stakedSol;
 
-      List<SolLib.ProgramAccount> tokenAccounts =
+      List<sol_lib.ProgramAccount> tokenAccounts =
           await fetchTokenAccounts(userPubkey.toString());
       Map<String, dynamic> walletTokenAccountsWithMints = {};
 
@@ -90,7 +88,7 @@ class _NavScreenState extends State<NavScreen> {
         }
       }
 
-      List<SolLib.ProgramAccount> token2022Accounts =
+      List<sol_lib.ProgramAccount> token2022Accounts =
           await fetchToken2022Accounts(userPubkey.toString());
       Map<String, dynamic> walletToken2022AccountsWithMints = {};
 
@@ -117,13 +115,6 @@ class _NavScreenState extends State<NavScreen> {
         ...walletTokenAccountsWithMints,
         ...walletToken2022AccountsWithMints
       };
-
-      for (var entry in userAllWalletTokenAccountsWithMints.entries) {
-        if (entry.value == simpleTokenMint) {
-          userSimpleTokenAccount = Pubkey.fromString(entry.key);
-          break;
-        }
-      }
 
       for (var key in userAllWalletTokenAccountsWithMints.keys) {
         var tokenAccountBalance = await fetchTokenAccountBalance(key);
@@ -217,6 +208,8 @@ class _NavScreenState extends State<NavScreen> {
                           ),
                           ProtocolPage(
                             userPubkey: userPubkey!,
+                            userAllWalletTokenAccountsWithMints:
+                                userAllWalletTokenAccountsWithMints,
                             provider: widget.provider,
                           ),
                           PortfolioPage(
