@@ -123,7 +123,7 @@ class _NavScreenState extends State<NavScreen> {
     }
   }
 
-  void _showInfoDialog(final BuildContext context) {
+  void _showInfoDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -148,14 +148,14 @@ class _NavScreenState extends State<NavScreen> {
     );
   }
 
-  void _showTokenSearchDialog(final BuildContext context) {
+  void _showTokenSearchDialog() {
     showDialog(
         context: context,
         builder: (context) =>
             DropDownTokenSearch(allFungibleTokens: allFungibleTokens!));
   }
 
-  void _launchJupAgUrl(final BuildContext context) async {
+  void _launchJupAgUrl() async {
     const url = 'https://jup.ag/';
 
     AndroidIntent intent = const AndroidIntent(
@@ -289,7 +289,7 @@ class _NavScreenState extends State<NavScreen> {
                   bottom: screenHeight * 0.03,
                   left: screenWidth * 0.30,
                   child: GestureDetector(
-                    onTap: () => _launchJupAgUrl(context),
+                    onTap: () => _launchJupAgUrl(),
                     child: ClipOval(
                       child: Image.asset(
                         'assets/jup_icon.png',
@@ -304,7 +304,7 @@ class _NavScreenState extends State<NavScreen> {
                   bottom: screenHeight * 0.08,
                   left: screenWidth * 0.24,
                   child: GestureDetector(
-                    onTap: () => _showInfoDialog(context),
+                    onTap: () => _showInfoDialog(),
                     child: const Icon(Icons.info_outline,
                         color: Colors.grey, size: 20),
                   ),
@@ -313,7 +313,7 @@ class _NavScreenState extends State<NavScreen> {
                   bottom: screenHeight * 0.018,
                   left: screenWidth * 0.22,
                   child: GestureDetector(
-                    onTap: () => _showTokenSearchDialog(context),
+                    onTap: () => _showTokenSearchDialog(),
                     child:
                         const Icon(Icons.search, color: Colors.grey, size: 37),
                   ),

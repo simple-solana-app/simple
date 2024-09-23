@@ -14,14 +14,6 @@ final AppIdentity simpleIdentity = AppIdentity(
 
 const String simpleTokenMint = "4QUwG4eADsjfaZ5nTEd6eGF5he8vR8FCFLPgwmpiJRD5";
 
-//TODO placeholders
-final Pubkey PHmySimpleAccount =
-    Pubkey.fromBase58('5LEXeqv44X21oCBybV74ZTQCVKLtX1iL5474gSUjWwrx');
-final Pubkey PHmyRaydiumLPAta =
-    Pubkey.fromBase58('E6JtEhz3DDEZvv91YLanMxwQnMe3ov8Hu4892ba3wdAm');
-final Pubkey PHmyUserClaimTracker =
-    Pubkey.fromBase58('2gn5Pdh3jiL3S7XTphHv7mra2uGWYCavaACFqPK4AAvv');
-
 const String mainnetBetaUri = 'https://api.mainnet-beta.solana.com';
 RpcClient mainnetClient = RpcClient(mainnetBetaUri);
 

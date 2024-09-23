@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter/material.dart';
 import 'package:simple/common.dart';
 import 'package:solana/dto.dart' as sol_lib;
@@ -41,6 +42,7 @@ class _ProtocolPageState extends State<ProtocolPage> {
   Pubkey? _userClaimTrackerPubkey;
   Pubkey? _userSimpleTokenAccountPubkey;
   Pubkey? _userRaydiumLpAta;
+
   int? _userClaimTrackerLamps;
 
   @override
@@ -53,7 +55,8 @@ class _ProtocolPageState extends State<ProtocolPage> {
     super.initState();
 
     _checkClaimTracker();
-    _checkTokenAccounts();
+    _checkSimpleTokenAccount();
+    _checkRaydiumAccount();
   }
 
   void _checkClaimTracker() async {
@@ -74,27 +77,27 @@ class _ProtocolPageState extends State<ProtocolPage> {
       _userClaimTrackerPubkey = userClaimTrackerPdaInfo.pubkey;
       _userClaimTrackerLamps = lamports;
     });
-
-    print("claim tracker: $lamports, $_userClaimTrackerPubkey");
   }
 
-  //TODO this needs to check lamps of ATA of Raydium LP
-  void _checkTokenAccounts() async {
+  void _checkSimpleTokenAccount() async {
     for (var entry in widget.userAllWalletTokenAccountsWithMints.entries) {
       if (entry.value == simpleTokenMint) {
         setState(() {
           _userSimpleTokenAccountPubkey = Pubkey.fromString(entry.key);
         });
+        break;
       }
+    }
+  }
+
+  void _checkRaydiumAccount() async {
+    for (var entry in widget.userAllWalletTokenAccountsWithMints.entries) {
       if (entry.value == raydiumLpMint.toString()) {
         setState(() {
           _userRaydiumLpAta = Pubkey.fromString(entry.key);
         });
+        break;
       }
-      print(_userSimpleTokenAccountPubkey);
-      print(_userRaydiumLpAta);
-
-      break;
     }
   }
 
@@ -130,16 +133,14 @@ class _ProtocolPageState extends State<ProtocolPage> {
 
       final Transaction tx = Transaction(message: msg);
 
-//need if mounted so context isn't udnerlined squigly blue
+      //need if mounted so context isn't udnerlined squigly blue
       if (mounted) {
         widget.provider.signAndSendTransactions(context, transactions: [tx]);
       }
     } catch (e) {
-      print('Error: $e');
+      throw Exception(e);
     }
   }
-
-  void _createSimpleAta() async {}
 
   void _execute() async {
     try {
@@ -190,44 +191,76 @@ class _ProtocolPageState extends State<ProtocolPage> {
         widget.provider.signAndSendTransactions(context, transactions: [tx]);
       }
     } catch (e) {
-      print('Error: $e');
+      throw Exception(e);
     }
+  }
+
+  void _openSolscan() async {
+    const url = 'https://solscan.io/account/5bzgEZX5KE4BckyTG7s391EayGeYMd3yx9dgeBLMof2x';
+
+    AndroidIntent intent = const AndroidIntent(
+      action: 'action_view',
+      data: url,
+      package: 'com.android.chrome',
+    );
+
+    await intent.launch();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          if (_userRaydiumLpAta != null) ...[
-            if (_userClaimTrackerLamps == null)
-              ElevatedButton(
-                onPressed: _createClaimTrackerAccount,
-                child: const Text('Create your Claim Tracker Account'),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (_userRaydiumLpAta != null) ...[
+              if (_userClaimTrackerLamps == null)
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.black,
+                    backgroundColor: Colors.white,
+                  ),
+                  onPressed: _createClaimTrackerAccount,
+                  child: const Text('Create your Claim Tracker Account'),
+                ),
+              if (_userSimpleTokenAccountPubkey == null)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8.0),
+                  child: Text(
+                    "Please create your 'simple' token account by swapping for some on the open market.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                ),
+              if (_userClaimTrackerLamps != null &&
+                  _userSimpleTokenAccountPubkey != null)
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.black,
+                    backgroundColor: Colors.white,
+                  ),
+                  onPressed: _execute,
+                  child: const Text("Execute"),
+                ),
+              ElevatedButton.icon(
+                 style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.black,
+                  ),
+                  label: const Text('Simple Protocol will only successfully execute for every 50 SOL increase in liqudity of the SOL-simple pool.',), icon: const Icon(Icons.assistant_navigation), onPressed: _openSolscan,),
+            ] else ...[
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text(
+                  "Please supply liquidity to the pool before interacting with the protocol",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, color: Colors.white),
+                ),
               ),
-            if (_userSimpleTokenAccountPubkey == null)
-              ElevatedButton(
-                onPressed: _createSimpleAta,
-                child: const Text('Create your Simple Token Account'),
-              ),
-            if (_userClaimTrackerLamps != null &&
-                _userSimpleTokenAccountPubkey != null)
-              ElevatedButton(
-                onPressed: _execute,
-                child: const Text("Execute"),
-              ),
-          ] else ...[
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Text(
-                "Please supply liquidity to the pool before interacting with the protocol",
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16),
-              ),
-            ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
