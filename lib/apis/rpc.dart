@@ -1,12 +1,12 @@
 import 'dart:typed_data';
-import 'package:simple/domain/common.dart';
+import 'package:simple/common.dart';
 import 'package:solana/base58.dart';
 import 'package:solana/dto.dart';
 import 'package:solana/solana.dart';
 
-Future<double> fetchAccountSolanaBalance(account) async {
+Future<double> fetchAccountSolanaBalance(String accountPubkey) async {
   try {
-    final accountBalance = await mainnetClient.getBalance(account);
+    final accountBalance = await mainnetClient.getBalance(accountPubkey);
 
     return (accountBalance.value / lamportsPerSol);
   } catch (e) {
@@ -14,16 +14,18 @@ Future<double> fetchAccountSolanaBalance(account) async {
   }
 }
 
-Future<double> fetchAccountTotalStakedSol(account) async {
+Future<double> fetchAccountTotalStakedSol(String accountPubkey) async {
   const encoding = Encoding.base64;
 
   final filters = [
-    ProgramDataFilter.memcmp(offset: 44, bytes: base58decode(account))
+    ProgramDataFilter.memcmp(offset: 44, bytes: base58decode(accountPubkey))
   ];
 
   try {
-    final response = await mainnetClient.getProgramAccounts(stakeProgramId,
-        encoding: encoding, filters: filters);
+    final response = await mainnetClient.getProgramAccounts(
+        StakeProgram.programId,
+        encoding: encoding,
+        filters: filters);
 
     if (response.isEmpty) {
       return 0.0;
@@ -41,14 +43,14 @@ Future<double> fetchAccountTotalStakedSol(account) async {
   }
 }
 
-Future<List<ProgramAccount>> fetchTokenAccounts(account) async {
-  const filter = TokenAccountsFilter.byProgramId(tokenProgramId);
+Future<List<ProgramAccount>> fetchTokenAccounts(String accountPubkey) async {
+  const filter = TokenAccountsFilter.byProgramId(TokenProgram.programId);
 
   const encoding = Encoding.base64;
 
   try {
     final tokenAccounts = await mainnetClient
-        .getTokenAccountsByOwner(account, filter, encoding: encoding);
+        .getTokenAccountsByOwner(accountPubkey, filter, encoding: encoding);
 
     return tokenAccounts.value;
   } catch (e) {
@@ -56,14 +58,15 @@ Future<List<ProgramAccount>> fetchTokenAccounts(account) async {
   }
 }
 
-Future<List<ProgramAccount>> fetchToken2022Accounts(account) async {
-  const filter = TokenAccountsFilter.byProgramId(token2022ProgramId);
+Future<List<ProgramAccount>> fetchToken2022Accounts(
+    String accountPubkey) async {
+  const filter = TokenAccountsFilter.byProgramId(Token2022Program.programId);
 
   const encoding = Encoding.base64;
 
   try {
     final tokenAccounts = await mainnetClient
-        .getTokenAccountsByOwner(account, filter, encoding: encoding);
+        .getTokenAccountsByOwner(accountPubkey, filter, encoding: encoding);
 
     return tokenAccounts.value;
   } catch (e) {
@@ -71,10 +74,10 @@ Future<List<ProgramAccount>> fetchToken2022Accounts(account) async {
   }
 }
 
-Future<double> fetchTokenAccountBalance(tokenAccount) async {
+Future<double> fetchTokenAccountBalance(String tokenAccountPubkey) async {
   try {
     final tokenAccountBalance =
-        await mainnetClient.getTokenAccountBalance(tokenAccount);
+        await mainnetClient.getTokenAccountBalance(tokenAccountPubkey);
 
     return double.parse(tokenAccountBalance.value.uiAmountString!);
   } catch (e) {

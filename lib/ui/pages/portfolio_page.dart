@@ -1,29 +1,36 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:simple/apis/price.dart';
-import 'package:simple/apis/rpc.dart';
 import 'package:simple/apis/token.dart';
-import 'package:simple/domain/common.dart';
+import 'package:simple/common.dart';
 import 'package:simple/domain/vs_tokens.dart';
 import 'package:simple/ui/elements/token_info.dart';
-import 'package:solana/dto.dart';
+import 'package:solana_wallet_provider/solana_wallet_provider.dart';
 
 class PortfolioPage extends StatefulWidget {
-  final List<TokenModel> allFungibleTokens;
-
-  final String walletLabel;
-  final String walletAddress;
-
   const PortfolioPage({
     super.key,
     required this.allFungibleTokens,
-    required this.walletLabel,
-    required this.walletAddress,
+    required this.userPubkey,
+    required this.userLabel,
+    required this.userSolanaBalance,
+    required this.userTotalStakedSolanaBalance,
+    required this.userAllWalletTokenAccountsWithBalances,
+    required this.userAllWalletTokenAccountsWithMints,
+    required this.provider,
   });
+
+  final List<TokenModel> allFungibleTokens;
+  final SolanaWalletProvider provider;
+  final Pubkey userPubkey;
+  final String userLabel;
+  final double userSolanaBalance;
+  final double userTotalStakedSolanaBalance;
+  final Map<String, String> userAllWalletTokenAccountsWithMints;
+  final Map<String, double> userAllWalletTokenAccountsWithBalances;
 
   @override
   State<PortfolioPage> createState() => _PortfolioPageState();
@@ -31,11 +38,6 @@ class PortfolioPage extends StatefulWidget {
 
 class _PortfolioPageState extends State<PortfolioPage> {
   late Timer _timer;
-
-  bool _apiError = false;
-
-  double? _walletSolanaBalance;
-  double? _walletTotalStakedSolana;
 
   List<TokenModel> _allFungibleTokensInWallet = [];
   List<String> _allNftsInWallet = [];
@@ -55,6 +57,8 @@ class _PortfolioPageState extends State<PortfolioPage> {
 
   Map<String, double> _tokenPrices = {};
 
+  Color _differenceColor = Colors.white;
+
   @override
   void dispose() {
     super.dispose();
@@ -67,135 +71,44 @@ class _PortfolioPageState extends State<PortfolioPage> {
     super.initState();
 
     _initializePortfolio();
+
+    if (_valueDifference != null) {
+      _differenceColor = _valueDifference! > 0
+          ? Colors.greenAccent
+          : (_valueDifference! < 0 ? Colors.redAccent : Colors.white);
+    }
   }
 
   void _initializePortfolio() {
-    _getWalletSolanaBalance();
-    _getWalletTotalStakedSolana();
-
     _getAllFungibleAndNonFungibleTokensInWallet();
 
-    if (mounted) {
-      setState(() {
-        _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-          try {
-            _getPricesAndUpdateValueInfo(_vsToken);
-          } catch (e) {
-            if (mounted) {
-              setState(() {
-                _apiError = true;
-              });
-            }
-          }
-        });
+    setState(() {
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        _getPricesAndUpdateValueInfo(_vsToken);
       });
-    }
-  }
-
-  void _getWalletSolanaBalance() async {
-    double walletSolanaBalance =
-        await fetchAccountSolanaBalance(widget.walletAddress);
-
-    if (mounted) {
-      setState(() {
-        _walletSolanaBalance = walletSolanaBalance;
-      });
-    }
-  }
-
-  void _getWalletTotalStakedSolana() async {
-    double walletTotalStakedSolana =
-        await fetchAccountTotalStakedSol(widget.walletAddress);
-
-    if (mounted) {
-      setState(() {
-        _walletTotalStakedSolana = walletTotalStakedSolana;
-      });
-    }
+    });
   }
 
   void _getAllFungibleAndNonFungibleTokensInWallet() async {
-    List<ProgramAccount> tokenAccounts =
-        await fetchTokenAccounts(widget.walletAddress);
-    Map<String, dynamic> walletTokenAccountsWithMints = {};
-
-    if (tokenAccounts.isNotEmpty) {
-      for (var tokenAccount in tokenAccounts) {
-        var tokenAccountAddress = tokenAccount.pubkey;
-        var accountInfo = tokenAccount.account.data?.toJson();
-
-        for (var act in accountInfo) {
-          try {
-            var decodedData = base64.decode(act);
-            var tokenAccountInfo =
-                parseTokenAccount(Uint8List.fromList(decodedData));
-
-            walletTokenAccountsWithMints[tokenAccountAddress] =
-                tokenAccountInfo.mint;
-          } catch (_) {
-            continue;
-          }
-        }
-      }
-    }
-
-    List<ProgramAccount> token2022Accounts =
-        await fetchToken2022Accounts(widget.walletAddress);
-    Map<String, dynamic> walletToken2022AccountsWithMints = {};
-
-    if (token2022Accounts.isNotEmpty) {
-      for (var token2022Account in token2022Accounts) {
-        var token2022AccountAddress = token2022Account.pubkey;
-        var accountInfo = token2022Account.account.data?.toJson();
-        for (var act in accountInfo) {
-          try {
-            var decodedData = base64.decode(act);
-            var token2022AccountInfo =
-                parseTokenAccount(Uint8List.fromList(decodedData));
-
-            walletToken2022AccountsWithMints[token2022AccountAddress] =
-                token2022AccountInfo.mint;
-          } catch (_) {
-            continue;
-          }
-        }
-      }
-    }
-
-    Map<String, dynamic> allWalletTokenAccountsWithMints = {
-      ...walletTokenAccountsWithMints,
-      ...walletToken2022AccountsWithMints
-    };
-
     List<TokenModel> allFungibleTokensInWallet = [];
 
-    if (allWalletTokenAccountsWithMints.isNotEmpty) {
-      allFungibleTokensInWallet = widget.allFungibleTokens.where((token) {
-        return allWalletTokenAccountsWithMints.values.contains(token.mint);
-      }).toList();
-    }
-
-    Map<String, double> allWalletTokenAccountsWithBalances = {};
-
-    if (allWalletTokenAccountsWithMints.isNotEmpty) {
-      for (var tokenAccount in allWalletTokenAccountsWithMints.keys) {
-        var tokenAccountBalance = await fetchTokenAccountBalance(tokenAccount);
-
-        allWalletTokenAccountsWithBalances[tokenAccount] = tokenAccountBalance;
-      }
-    }
+    allFungibleTokensInWallet = widget.allFungibleTokens.where((token) {
+      return widget.userAllWalletTokenAccountsWithMints.values
+          .contains(token.mint);
+    }).toList();
 
     List<String> allNftsInWallet = [];
 
     Set<String> allFungibleTokenMints =
         widget.allFungibleTokens.map((token) => token.mint).toSet();
 
-    allWalletTokenAccountsWithBalances.forEach((tokenAccount, balance) {
+    widget.userAllWalletTokenAccountsWithBalances
+        .forEach((tokenAccount, balance) {
       if (balance == 1.0) {
-        var mint = allWalletTokenAccountsWithMints[tokenAccount];
+        var mint = widget.userAllWalletTokenAccountsWithMints[tokenAccount];
 
         if (!allFungibleTokenMints.contains(mint)) {
-          allNftsInWallet.add(mint);
+          allNftsInWallet.add(mint!);
         }
       }
     });
@@ -203,32 +116,32 @@ class _PortfolioPageState extends State<PortfolioPage> {
     Map<String, double> allFungibleTokenMintsWithBalancesInWallet = {};
 
     for (var token in allFungibleTokensInWallet) {
-      var tokenAccount = allWalletTokenAccountsWithMints.entries.firstWhere(
+      var tokenAccount =
+          widget.userAllWalletTokenAccountsWithMints.entries.firstWhere(
         (entry) => entry.value == token.mint,
       );
-      var balance = allWalletTokenAccountsWithBalances[tokenAccount.key];
+      var balance =
+          widget.userAllWalletTokenAccountsWithBalances[tokenAccount.key];
       allFungibleTokenMintsWithBalancesInWallet[token.mint] = balance!;
     }
 
-    if (mounted) {
-      setState(() {
-        if (allFungibleTokensInWallet.isNotEmpty) {
-          _allFungibleTokensInWallet = allFungibleTokensInWallet;
-        }
+    setState(() {
+      if (allFungibleTokensInWallet.isNotEmpty) {
+        _allFungibleTokensInWallet = allFungibleTokensInWallet;
+      }
 
-        if (allNftsInWallet.isNotEmpty) {
-          _allNftsInWallet = allNftsInWallet;
-        }
+      if (allNftsInWallet.isNotEmpty) {
+        _allNftsInWallet = allNftsInWallet;
+      }
 
-        if (allFungibleTokenMintsWithBalancesInWallet.isNotEmpty) {
-          _concatenatedTokenAddresses =
-              allFungibleTokenMintsWithBalancesInWallet.keys.join(',');
+      if (allFungibleTokenMintsWithBalancesInWallet.isNotEmpty) {
+        _concatenatedTokenAddresses =
+            allFungibleTokenMintsWithBalancesInWallet.keys.join(',');
 
-          _allFungibleTokenMintsWithBalancesInWallet =
-              allFungibleTokenMintsWithBalancesInWallet;
-        }
-      });
-    }
+        _allFungibleTokenMintsWithBalancesInWallet =
+            allFungibleTokenMintsWithBalancesInWallet;
+      }
+    });
   }
 
   void _getPricesAndUpdateValueInfo(TokenModel vsToken) async {
@@ -272,18 +185,16 @@ class _PortfolioPageState extends State<PortfolioPage> {
       // don't do if _walletTotalValue is not null bc the value difference needs to not print the first one
       _penultimateWalletTotalValue = _walletTotalValue ?? 0;
 
-      if (_walletSolanaBalance != null && _solanaPrice != null) {
-        _walletSolanaValue = _walletSolanaBalance! * _solanaPrice!;
+      if (_solanaPrice != null) {
+        _walletSolanaValue = widget.userSolanaBalance * _solanaPrice!;
       }
 
-      if (_walletTotalStakedSolana != null && _solanaPrice != null) {
+      if (_solanaPrice != null) {
         _walletTotalStakedSolanaValue =
-            _walletTotalStakedSolana! * _solanaPrice!;
+            widget.userTotalStakedSolanaBalance * _solanaPrice!;
       }
 
-      if (_walletSolanaValue != null &&
-          _walletTotalStakedSolana != null &&
-          otherTokensValue != null) {
+      if (_walletSolanaValue != null && otherTokensValue != null) {
         _walletTotalValue = _walletSolanaValue! +
             _walletTotalStakedSolanaValue! +
             otherTokensValue;
@@ -306,433 +217,409 @@ class _PortfolioPageState extends State<PortfolioPage> {
           Positioned(
             top: screenHeight * 0.035,
             left: 0,
-            child: _buildInfoIcon(),
+            child: IconButton(
+              icon: const Icon(Icons.info_outline),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) => AlertDialog(
+                    title: const Text("Synch da boi"),
+                    content: const Text(
+                        "Please reconnect wallet if you left and made a trade and came back."),
+                    actions: <Widget>[
+                      TextButton(
+                        child: const Text(
+                          "Cool",
+                          style: TextStyle(color: Colors.black),
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
           ),
           Center(
-            child: _apiError
-                ? const Text(
-                    "Solana API timed-out. Please try visiting your portfolio again a little while.",
-                    style: TextStyle(color: Colors.white, fontSize: 18),
-                  )
-                : _walletTotalValue != null
-                    ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+            child: _walletTotalValue != null
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(height: screenHeight * 0.06),
+                      Container(
+                        alignment: Alignment.centerLeft,
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.userLabel,
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            GestureDetector(
+                              onLongPress: () {
+                                Clipboard.setData(ClipboardData(
+                                    text: widget.userPubkey.toString()));
+                              },
+                              child: Text(
+                                widget.userPubkey.toString(),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          SizedBox(height: screenHeight * 0.06),
-                          _buildWalletLabel(),
-                          _buildTotalWalletValue(),
-                          _buildPortfolio(),
-                          _buildVsTokenButtons(),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 8.0),
+                            child: Text(
+                              '${_vsToken.unicodeSymbol}${defaultNumberFormat.format(_walletTotalValue)}',
+                              style: const TextStyle(
+                                fontSize: 28,
+                                color: Colors.white,
+                              ),
+                              textAlign: TextAlign.start,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            '${_vsToken.unicodeSymbol}${defaultNumberFormat.format(_valueDifference != _walletTotalValue ? _valueDifference : 0)}',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: _differenceColor,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
                         ],
-                      )
-                    : const CircularProgressIndicator(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoIcon() {
-    return IconButton(
-      icon: const Icon(Icons.info_outline),
-      onPressed: () {
-        showDialog(
-          context: context,
-          builder: (BuildContext context) => AlertDialog(
-            title: const Text("Synch da boi"),
-            content: const Text(
-                "Please reconnect wallet if you left and made a trade and came back."),
-            actions: <Widget>[
-              TextButton(
-                child: const Text(
-                  "Cool",
-                  style: TextStyle(color: Colors.black),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildWalletLabel() {
-    return Container(
-      alignment: Alignment.centerLeft,
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            widget.walletLabel,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          GestureDetector(
-            onLongPress: () {
-              Clipboard.setData(ClipboardData(text: widget.walletAddress));
-            },
-            child: Text(
-              widget.walletAddress,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Colors.white,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTotalWalletValue() {
-    Color differenceColor = _valueDifference! > 0
-        ? Colors.greenAccent
-        : (_valueDifference! < 0 ? Colors.redAccent : Colors.white);
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 8.0),
-          child: Text(
-            '${_vsToken.unicodeSymbol}${defaultNumberFormat.format(_walletTotalValue)}',
-            style: const TextStyle(
-              fontSize: 28,
-              color: Colors.white,
-            ),
-            textAlign: TextAlign.start,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Text(
-          '${_vsToken.unicodeSymbol}${defaultNumberFormat.format(_valueDifference != _walletTotalValue ? _valueDifference : 0)}',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: differenceColor,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPortfolio() {
-    return Expanded(
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildSolanaCard(),
-            if (_walletTotalStakedSolana != 0) _buildStakedSolanaCard(),
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 10.0, horizontal: 8.0),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey[900],
-                  borderRadius: const BorderRadius.all(Radius.circular(10.0)),
-                ),
-                padding: const EdgeInsets.all(8.0),
-                child: const Text(
-                  'Tokens',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-            ..._allFungibleTokensInWallet.map((token) {
-              double tokenBalance =
-                  _allFungibleTokenMintsWithBalancesInWallet[token.mint]!;
-              double tokenPrice = _tokenPrices[token.mint]!;
-              return _buildFungibleTokenCard(token, tokenBalance, tokenPrice);
-            }),
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 10.0, horizontal: 8.0),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey[900], // Background color
-                  borderRadius: const BorderRadius.all(
-                      Radius.circular(10.0)), // Rounded border
-                ),
-                padding:
-                    const EdgeInsets.all(8.0), // Padding inside the container
-                child: const Text(
-                  'NFTs',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-            ..._allNftsInWallet.map((mint) {
-              return _buildNftCard(context, mint);
-            }),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSolanaCard() {
-    return Card(
-        color: Colors.grey[900],
-        child: GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => TokenInfo(
-                  allFungibleTokens: widget.allFungibleTokens,
-                  token: vsTokens.WSOL.token,
-                ),
-              ),
-            );
-          },
-          child: ListTile(
-            leading: ClipOval(
-              child: CachedNetworkImage(
-                imageUrl: vsTokens.WSOL.token.logo,
-                height: 35.0,
-                width: 35.0,
-                fit: BoxFit.cover,
-              ),
-            ),
-            title: const Text(
-              'Solana',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            subtitle: Text(
-              '${_vsToken.unicodeSymbol}${defaultNumberFormat.format(_solanaPrice)} - ${defaultNumberFormat.format(_walletSolanaBalance)}',
-              style: const TextStyle(color: Colors.white),
-            ),
-            trailing: Text(
-              '${_vsToken.unicodeSymbol}${defaultNumberFormat.format(_walletSolanaValue)}',
-              style: const TextStyle(
-                fontSize: 18,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ));
-  }
-
-  Widget _buildStakedSolanaCard() {
-    return Card(
-        color: Colors.grey[900],
-        child: GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => TokenInfo(
-                  token: vsTokens.WSOL.token,
-                  allFungibleTokens: widget.allFungibleTokens,
-                ),
-              ),
-            );
-          },
-          child: ListTile(
-            leading: ClipOval(
-              child: CachedNetworkImage(
-                imageUrl: vsTokens.WSOL.token.logo,
-                height: 35.0,
-                width: 35.0,
-                fit: BoxFit.cover,
-              ),
-            ),
-            title: const Text(
-              'Staked Solana',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            subtitle: Text(
-              defaultNumberFormat.format(_walletTotalStakedSolana),
-              style: const TextStyle(color: Colors.white),
-            ),
-            trailing: Text(
-              '${_vsToken.unicodeSymbol}${defaultNumberFormat.format(_walletTotalStakedSolanaValue)}',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ));
-  }
-
-  Widget _buildFungibleTokenCard(
-      TokenModel token, double tokenBalance, double tokenPrice) {
-    return Card(
-        color: Colors.grey[900],
-        child: GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => TokenInfo(
-                  token: token,
-                  allFungibleTokens: widget.allFungibleTokens,
-                ),
-              ),
-            );
-          },
-          child: ListTile(
-            leading: ClipOval(
-              child: token.logo.endsWith('.svg')
-                  ? SvgPicture.network(
-                      token.logo,
-                      placeholderBuilder: (context) => Container(
-                        width: 35.0,
-                        height: 35.0,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.grey,
-                        ),
-                        child: Center(
-                          child: Text(
-                            token.name[0],
-                            style: const TextStyle(color: Colors.white),
+                      ),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Card(
+                                  color: Colors.grey[900],
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => TokenInfo(
+                                            allFungibleTokens:
+                                                widget.allFungibleTokens,
+                                            token: vsTokens.WSOL.token,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    child: ListTile(
+                                      leading: ClipOval(
+                                        child: CachedNetworkImage(
+                                          imageUrl: vsTokens.WSOL.token.logo,
+                                          height: 35.0,
+                                          width: 35.0,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                      title: const Text(
+                                        'Solana',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                        '${_vsToken.unicodeSymbol}${defaultNumberFormat.format(_solanaPrice)} - ${defaultNumberFormat.format(widget.userSolanaBalance)}',
+                                        style: const TextStyle(
+                                            color: Colors.white),
+                                      ),
+                                      trailing: Text(
+                                        '${_vsToken.unicodeSymbol}${defaultNumberFormat.format(_walletSolanaValue)}',
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  )),
+                              if (widget.userTotalStakedSolanaBalance != 0)
+                                Card(
+                                    color: Colors.grey[900],
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => TokenInfo(
+                                              token: vsTokens.WSOL.token,
+                                              allFungibleTokens:
+                                                  widget.allFungibleTokens,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      child: ListTile(
+                                        leading: ClipOval(
+                                          child: CachedNetworkImage(
+                                            imageUrl: vsTokens.WSOL.token.logo,
+                                            height: 35.0,
+                                            width: 35.0,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                        title: const Text(
+                                          'Staked Solana',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        subtitle: Text(
+                                          defaultNumberFormat.format(widget
+                                              .userTotalStakedSolanaBalance),
+                                          style: const TextStyle(
+                                              color: Colors.white),
+                                        ),
+                                        trailing: Text(
+                                          '${_vsToken.unicodeSymbol}${defaultNumberFormat.format(_walletTotalStakedSolanaValue)}',
+                                          style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    )),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 10.0, horizontal: 8.0),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[900],
+                                    borderRadius: const BorderRadius.all(
+                                        Radius.circular(10.0)),
+                                  ),
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: const Text(
+                                    'Tokens',
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              ),
+                              ..._allFungibleTokensInWallet.map((token) {
+                                double tokenBalance =
+                                    _allFungibleTokenMintsWithBalancesInWallet[
+                                        token.mint]!;
+                                double tokenPrice = _tokenPrices[token.mint]!;
+                                return Card(
+                                    color: Colors.grey[900],
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => TokenInfo(
+                                              token: token,
+                                              allFungibleTokens:
+                                                  widget.allFungibleTokens,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      child: ListTile(
+                                        leading: ClipOval(
+                                          child: token.logo.endsWith('.svg')
+                                              ? SvgPicture.network(
+                                                  token.logo,
+                                                  placeholderBuilder:
+                                                      (context) => Container(
+                                                    width: 35.0,
+                                                    height: 35.0,
+                                                    decoration:
+                                                        const BoxDecoration(
+                                                      shape: BoxShape.circle,
+                                                      color: Colors.grey,
+                                                    ),
+                                                    child: Center(
+                                                      child: Text(
+                                                        token.name[0],
+                                                        style: const TextStyle(
+                                                            color:
+                                                                Colors.white),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  height: 35.0,
+                                                  width: 35.0,
+                                                )
+                                              : CachedNetworkImage(
+                                                  imageUrl: token.logo,
+                                                  placeholder: (context, url) =>
+                                                      Container(
+                                                    width: 35.0,
+                                                    height: 35.0,
+                                                    decoration:
+                                                        const BoxDecoration(
+                                                      shape: BoxShape.circle,
+                                                      color: Colors.grey,
+                                                    ),
+                                                    child: Center(
+                                                      child: Text(
+                                                        token.name[0],
+                                                        style: const TextStyle(
+                                                            color:
+                                                                Colors.white),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  errorWidget:
+                                                      (context, url, error) =>
+                                                          Container(
+                                                    width: 35.0,
+                                                    height: 35.0,
+                                                    decoration:
+                                                        const BoxDecoration(
+                                                      shape: BoxShape.circle,
+                                                      color: Colors.grey,
+                                                    ),
+                                                    child: Center(
+                                                      child: Text(
+                                                        token.name[0],
+                                                        style: const TextStyle(
+                                                            color:
+                                                                Colors.white),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  height: 35.0,
+                                                  width: 35.0,
+                                                  fit: BoxFit.cover,
+                                                ),
+                                        ),
+                                        title: Text(
+                                          token.symbol,
+                                          style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        subtitle: Text(
+                                          '${_vsToken.unicodeSymbol}${defaultNumberFormat.format(tokenPrice)} - ${defaultNumberFormat.format(tokenBalance)}',
+                                          style: const TextStyle(
+                                              color: Colors.white),
+                                        ),
+                                        trailing: Text(
+                                          '${_vsToken.unicodeSymbol}${defaultNumberFormat.format(tokenBalance * tokenPrice)}',
+                                          style: const TextStyle(
+                                            fontSize: 18,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ));
+                              }),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 10.0, horizontal: 8.0),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[900], // Background color
+                                    borderRadius: const BorderRadius.all(
+                                        Radius.circular(
+                                            10.0)), // Rounded border
+                                  ),
+                                  padding: const EdgeInsets.all(
+                                      8.0), // Padding inside the container
+                                  child: const Text(
+                                    'NFTs',
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              ),
+                              ..._allNftsInWallet.map((mint) {
+                                return GestureDetector(
+                                  onLongPress: () {
+                                    Clipboard.setData(
+                                        ClipboardData(text: mint));
+                                  },
+                                  child: Card(
+                                    color: Colors.grey[900],
+                                    child: ListTile(
+                                      title: Text(
+                                        mint,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.white,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }),
+                            ],
                           ),
                         ),
                       ),
-                      height: 35.0,
-                      width: 35.0,
-                    )
-                  : CachedNetworkImage(
-                      imageUrl: token.logo,
-                      placeholder: (context, url) => Container(
-                        width: 35.0,
-                        height: 35.0,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.grey,
-                        ),
-                        child: Center(
-                          child: Text(
-                            token.name[0],
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        width: 35.0,
-                        height: 35.0,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.grey,
-                        ),
-                        child: Text(
-                          token.name[0],
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                      ),
-                      height: 35.0,
-                      width: 35.0,
-                      fit: BoxFit.cover,
-                    ),
-            ),
-            title: Text(
-              token.symbol,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            subtitle: Text(
-              '${_vsToken.unicodeSymbol}${defaultNumberFormat.format(tokenPrice)} - ${defaultNumberFormat.format(tokenBalance)}',
-              style: const TextStyle(color: Colors.white),
-            ),
-            trailing: Text(
-              '${_vsToken.unicodeSymbol}${defaultNumberFormat.format(tokenBalance * tokenPrice)}',
-              style: const TextStyle(
-                fontSize: 18,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ));
-  }
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: vsTokens.values.map((t) {
+                          return TextButton(
+                            onPressed: () {
+                              if (t.token == _vsToken) {
+                                return;
+                              }
 
-  Widget _buildNftCard(BuildContext context, String mint) {
-    return GestureDetector(
-      onLongPress: () {
-        Clipboard.setData(ClipboardData(text: mint));
-      },
-      child: Card(
-        color: Colors.grey[900],
-        child: ListTile(
-          title: Text(
-            mint,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.white,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+                              setState(() {
+                                _walletTotalValue = null;
+                                _vsToken = t.token;
+                              });
+
+                              _getPricesAndUpdateValueInfo(t.token);
+                            },
+                            child: Text(
+                              t.token.unicodeSymbol!,
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: _vsToken == t.token
+                                    ? Colors.white
+                                    : Colors.grey,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  )
+                : const CircularProgressIndicator(),
           ),
-        ),
+        ],
       ),
-    );
-  }
-
-  Widget _buildVsTokenButtons() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: vsTokens.values.map((vsToken) {
-        return TextButton(
-          onPressed: () {
-            if (vsToken.token == _vsToken) {
-              return;
-            }
-
-            setState(() {
-              _walletTotalValue = null;
-              _vsToken = vsToken.token;
-            });
-
-            try {
-              _getPricesAndUpdateValueInfo(vsToken.token);
-            } catch (e) {
-              if (mounted) {
-                setState(() {
-                  _apiError = true;
-                });
-              }
-            }
-          },
-          child: Text(
-            vsToken.token.unicodeSymbol!,
-            style: const TextStyle(
-              fontSize: 18,
-              color: Colors.grey,
-            ),
-          ),
-        );
-      }).toList(),
     );
   }
 }

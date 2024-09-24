@@ -9,6 +9,8 @@
 .history
 .svn/
 migrate_working_dir/
+publishing/node_modules
+
 
 #Key Signing, Safety no. 1 priority kids.
 *.keystore
