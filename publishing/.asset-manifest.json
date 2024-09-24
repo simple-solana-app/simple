@@ -1,34 +1,34 @@
 {
   "assets": {
-    "./media/512x512_logo.png": {
-      "path": "./media/512x512_logo.png",
-      "sha256": "5vX5oTCB7BWpwr1zm3iUcH5ggUTBNolBlh0vKnyyQ+k=",
-      "uri": "https://arweave.net/P4LHZu4QKs-OeqwtgHHPWot71wEXEZ8S7K9B1ZWwSSc"
-    },
     "./media/token_price_with_graph.png": {
       "path": "./media/token_price_with_graph.png",
       "sha256": "yA+UtoMHfHumuVYxtTCRTJKfbaOz8X7tQTq+erpSJXM=",
-      "uri": "https://arweave.net/z_6CiFuzUyk8wA2ostsbIoATmUE0fId58bxm0ShJACc"
+      "uri": "https://arweave.net/Kt2gNh-s9QvxO9cjzx97-BQA8_Yg7oClPw3TnyWk8IM"
     },
-    "./media/token_info.png": {
-      "path": "./media/token_info.png",
-      "sha256": "XEO3MAgANZP6zKlJf/1+0cLpe47yqjRiLUbTeONFX7A=",
-      "uri": "https://arweave.net/cvvknZceJz5xr678DPOrkxiibM6HcNme9wHE3ViX5uE"
-    },
-    "./media/tokens_page.png": {
-      "path": "./media/tokens_page.png",
-      "sha256": "q2oyx0yukcDIgkb818iz/jM/WrLiMRZ/ZnfFgl0LluE=",
-      "uri": "https://arweave.net/_3vey_fhVI7sgkMtevWBuv26KbHwJ2ea-WLIZgJoTsE"
+    "./media/512x512_logo.png": {
+      "path": "./media/512x512_logo.png",
+      "sha256": "5vX5oTCB7BWpwr1zm3iUcH5ggUTBNolBlh0vKnyyQ+k=",
+      "uri": "https://arweave.net/MFpkPymJWTt28oUavsbvzUpt2osPhNLu41xHpkxG_D0"
     },
     "./media/portfolio_page.png": {
       "path": "./media/portfolio_page.png",
       "sha256": "FFcHKmQOSkjcq5G0QqyeFIZCWcNFxg8l2uLnxBiZznk=",
-      "uri": "https://arweave.net/myTXb70ljqiny1uuKxaRkU5-HT5Uk--vJP5gBpwtBHk"
+      "uri": "https://arweave.net/DObEfy0dC5TSXZKJTAm5I1VLGw00mJOguWsq6SfGj8Y"
+    },
+    "./media/tokens_page.png": {
+      "path": "./media/tokens_page.png",
+      "sha256": "q2oyx0yukcDIgkb818iz/jM/WrLiMRZ/ZnfFgl0LluE=",
+      "uri": "https://arweave.net/gejLkDJkvzhHC-9rjOFhVbUBYoqLgpVPEq_UCt6e6MA"
+    },
+    "./media/token_info.png": {
+      "path": "./media/token_info.png",
+      "sha256": "XEO3MAgANZP6zKlJf/1+0cLpe47yqjRiLUbTeONFX7A=",
+      "uri": "https://arweave.net/ZpqN6FA5mhLjsstnimLVsNYfSTY0CTwlQSYu4n9ZAgI"
     },
     "./files/app-release.apk": {
       "path": "./files/app-release.apk",
-      "sha256": "Mz1iqLNJyhnsbX4yTZ/qvlAUCpspp465tPY9+aeZG/4=",
-      "uri": "https://arweave.net/Laz2BliS8CFKiE1oFbQsQoY-ihlEQZH0K0W-ZnLw4CQ"
+      "sha256": "wSlSOjJ2gUIfYC5cnfgTIZhhStF9x26qXjCQKMu/o7E=",
+      "uri": "https://arweave.net/JiP0viPj3Q6tnyjBEjKYCR8eusAAvFV8lAjnsdc6kQ4"
     }
   }
 }
